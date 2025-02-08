@@ -64,7 +64,9 @@
         </div>
         
         <ul id="study-list" class="study-list"></ul>
-        
+        <h2>Archivos PDF Disponibles</h2>
+<ul id="pdf-list" class="study-list"></ul>
+
         <div id="study-content">
             <button onclick="goBack()">Volver al inicio</button>
             <h2 id="study-title"></h2>
@@ -139,6 +141,26 @@
         }
 
         showAllStudies();
+        async function fetchPDFs() {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbzfsHprJHQjhRtP4T3cbrB7Kju0hNkKEtWvwACPZRMQmIWW3px9COE9kHzPK3uQ9SQNBw/exec");
+    const pdfs = await response.json();
+    
+    const pdfList = document.getElementById("pdf-list");
+    pdfList.innerHTML = ""; 
+
+    pdfs.forEach(pdf => {
+        let li = document.createElement("li");
+        let link = document.createElement("a");
+        link.href = pdf.url;
+        link.textContent = pdf.name;
+        link.target = "_blank";
+        li.appendChild(link);
+        pdfList.appendChild(li);
+    });
+}
+
+fetchPDFs();  // Llamar a la función cuando la página cargue
+
     </script>
 </body>
 </html>
