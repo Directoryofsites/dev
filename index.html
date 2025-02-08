@@ -3,56 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biblioteca Teológica</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.9/lunr.min.js"></script>
+    <title>Biblioteca Teológica Digital</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            text-align: center;
             margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f4f4f4;
         }
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
+            max-width: 800px;
+            margin: auto;
+            background: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .filters {
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
-        .filters select, .filters input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        button:hover {
+            background-color: #0056b3;
         }
-        .document-list {
-            display: grid;
-            gap: 20px;
+        .study-list {
+            list-style: none;
+            padding: 0;
         }
-        .document-card {
-            border: 1px solid #ddd;
-            padding: 15px;
-            border-radius: 4px;
-            background-color: white;
+        .study-list li {
+            padding: 10px;
+            background: #eee;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
         }
-        .document-card h3 {
-            margin-top: 0;
-            color: #2c3e50;
-        }
-        .tag {
-            display: inline-block;
-            background-color: #e0e0e0;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-right: 5px;
-            font-size: 0.9em;
+        #study-content {
+            display: none;
+            text-align: left;
         }
     </style>
 </head>
@@ -60,99 +54,91 @@
     <div class="container">
         <h1>Biblioteca Teológica Digital</h1>
         
-        <div class="filters">
-            <input type="text" id="searchInput" placeholder="Buscar documentos..." onkeyup="filterDocuments()">
-            <select id="categoryFilter" onchange="filterDocuments()">
-                <option value="">Todas las categorías</option>
-                <option value="doctrina">Doctrina</option>
-                <option value="historia">Historia de la Iglesia</option>
-                <option value="etica">Ética Cristiana</option>
-                <option value="pastoral">Teología Sistemática</option>
-                <option value="biblia">Estudios Bíblicos</option>
-            </select>
+        <button onclick="showAllStudies()">Ver todos los estudios</button>
+        <button onclick="searchByKeyword()">Buscar por palabra</button>
+        <button onclick="searchByBook()">Buscar por libro de la Biblia</button>
+        <button onclick="searchByDate()">Buscar por fecha</button>
+        
+        <div id="search-box" style="margin-top: 10px;">
+            <input type="text" id="search-input" placeholder="Escriba aquí..." oninput="filterStudies()">
         </div>
-
-        <div class="document-list" id="documentList">
-            <!-- Los documentos se cargarán aquí dinámicamente -->
+        
+        <ul id="study-list" class="study-list"></ul>
+        
+        <div id="study-content">
+            <button onclick="goBack()">Volver al inicio</button>
+            <h2 id="study-title"></h2>
+            <p><strong>Fecha de publicación:</strong> <span id="study-date"></span></p>
+            <p id="study-body"></p>
         </div>
     </div>
 
     <script>
-        // Ejemplo de datos de documentos
-        const documents = [
-            {
-                id: 1,
-                title: "Introducción a la Teología Sistemática",
-                description: "Un estudio comprensivo de los fundamentos de la teología sistemática.",
-                category: "doctrina",
-                tags: ["teología", "doctrina", "fundamentos"]
-            },
-            {
-                id: 2,
-                title: "Historia de la Reforma Protestante",
-                description: "Análisis detallado del movimiento de reforma del siglo XVI.",
-                category: "historia",
-                tags: ["reforma", "historia", "protestantismo"]
-            }
+        const studies = [
+            { title: "La Soberanía de Dios", content: "Contenido del estudio sobre la soberanía de Dios.", date: "2024-02-01", books: ["Romanos"] },
+            { title: "El Amor de Cristo", content: "Contenido sobre el amor de Cristo en la vida del creyente.", date: "2024-01-15", books: ["Juan"] },
+            { title: "La Justificación por la Fe", content: "Estudio sobre la doctrina de la justificación.", date: "2023-12-10", books: ["Gálatas", "Romanos"] }
         ];
 
-        // Inicializar el motor de búsqueda
-        const idx = lunr(function () {
-            this.field('title');
-            this.field('description');
-            this.field('tags');
-            
-            documents.forEach((doc) => {
-                this.add({
-                    id: doc.id,
-                    title: doc.title,
-                    description: doc.description,
-                    tags: doc.tags.join(' ')
-                });
-            });
-        });
-
-        function filterDocuments() {
-            const searchQuery = document.getElementById('searchInput').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            
-            let filteredDocs = documents;
-
-            // Aplicar filtro de categoría
-            if (categoryFilter) {
-                filteredDocs = filteredDocs.filter(doc => doc.category === categoryFilter);
-            }
-
-            // Aplicar búsqueda de texto
-            if (searchQuery) {
-                const searchResults = idx.search(searchQuery);
-                const searchIds = searchResults.map(result => parseInt(result.ref));
-                filteredDocs = filteredDocs.filter(doc => searchIds.includes(doc.id));
-            }
-
-            displayDocuments(filteredDocs);
+        function showAllStudies() {
+            document.getElementById("study-list").innerHTML = "";
+            studies.sort((a, b) => a.title.localeCompare(b.title));
+            studies.forEach(study => addStudyToList(study));
         }
 
-        function displayDocuments(docs) {
-            const container = document.getElementById('documentList');
-            container.innerHTML = '';
-
-            docs.forEach(doc => {
-                const docElement = document.createElement('div');
-                docElement.className = 'document-card';
-                docElement.innerHTML = `
-                    <h3>${doc.title}</h3>
-                    <p>${doc.description}</p>
-                    <div>
-                        ${doc.tags.map(tag => <span class="tag">${tag}</span>).join('')}
-                    </div>
-                `;
-                container.appendChild(docElement);
-            });
+        function addStudyToList(study) {
+            let li = document.createElement("li");
+            li.textContent = study.title;
+            li.onclick = () => showStudy(study);
+            document.getElementById("study-list").appendChild(li);
         }
 
-        // Mostrar todos los documentos al cargar
-        displayDocuments(documents);
+        function showStudy(study) {
+            document.getElementById("study-content").style.display = "block";
+            document.getElementById("study-list").style.display = "none";
+            document.getElementById("search-box").style.display = "none";
+            document.getElementById("study-title").textContent = study.title;
+            document.getElementById("study-date").textContent = study.date;
+            document.getElementById("study-body").textContent = study.content;
+        }
+
+        function goBack() {
+            document.getElementById("study-content").style.display = "none";
+            document.getElementById("study-list").style.display = "block";
+            document.getElementById("search-box").style.display = "block";
+        }
+
+        function filterStudies() {
+            let query = document.getElementById("search-input").value.toLowerCase();
+            document.getElementById("study-list").innerHTML = "";
+            let filtered = studies.filter(study => study.title.toLowerCase().includes(query) || study.content.toLowerCase().includes(query));
+            filtered.forEach(study => addStudyToList(study));
+        }
+
+        function searchByKeyword() {
+            document.getElementById("search-input").placeholder = "Buscar por palabra clave...";
+            document.getElementById("search-input").focus();
+        }
+
+        function searchByBook() {
+            let book = prompt("Ingrese el libro de la Biblia");
+            if (book) {
+                document.getElementById("study-list").innerHTML = "";
+                let filtered = studies.filter(study => study.books.includes(book));
+                filtered.forEach(study => addStudyToList(study));
+            }
+        }
+
+        function searchByDate() {
+            let date = prompt("Ingrese la fecha en formato YYYY-MM-DD");
+            if (date) {
+                document.getElementById("study-list").innerHTML = "";
+                let filtered = studies.filter(study => study.date === date);
+                filtered.forEach(study => addStudyToList(study));
+            }
+        }
+
+        showAllStudies();
     </script>
 </body>
 </html>
