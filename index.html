@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Teológica</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.9/lunr.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filters {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filters select, .filters input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .document-list {
+            display: grid;
+            gap: 20px;
+        }
+        .document-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            background-color: white;
+        }
+        .document-card h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .tag {
+            display: inline-block;
+            background-color: #e0e0e0;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Biblioteca Teológica Digital</h1>
+        
+        <div class="filters">
+            <input type="text" id="searchInput" placeholder="Buscar documentos..." onkeyup="filterDocuments()">
+            <select id="categoryFilter" onchange="filterDocuments()">
+                <option value="">Todas las categorías</option>
+                <option value="doctrina">Doctrina</option>
+                <option value="historia">Historia de la Iglesia</option>
+                <option value="etica">Ética Cristiana</option>
+                <option value="pastoral">Teología Pastoral</option>
+                <option value="biblia">Estudios Bíblicos</option>
+            </select>
+        </div>
+
+        <div class="document-list" id="documentList">
+            <!-- Los documentos se cargarán aquí dinámicamente -->
+        </div>
+    </div>
+
+    <script>
+        // Ejemplo de datos de documentos
+        const documents = [
+            {
+                id: 1,
+                title: "Introducción a la Teología Sistemática",
+                description: "Un estudio comprensivo de los fundamentos de la teología sistemática.",
+                category: "doctrina",
+                tags: ["teología", "doctrina", "fundamentos"]
+            },
+            {
+                id: 2,
+                title: "Historia de la Reforma Protestante",
+                description: "Análisis detallado del movimiento de reforma del siglo XVI.",
+                category: "historia",
+                tags: ["reforma", "historia", "protestantismo"]
+            }
+        ];
+
+        // Inicializar el motor de búsqueda
+        const idx = lunr(function () {
+            this.field('title');
+            this.field('description');
+            this.field('tags');
+            
+            documents.forEach((doc) => {
+                this.add({
+                    id: doc.id,
+                    title: doc.title,
+                    description: doc.description,
+                    tags: doc.tags.join(' ')
+                });
+            });
+        });
+
+        function filterDocuments() {
+            const searchQuery = document.getElementById('searchInput').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            
+            let filteredDocs = documents;
+
+            // Aplicar filtro de categoría
+            if (categoryFilter) {
+                filteredDocs = filteredDocs.filter(doc => doc.category === categoryFilter);
+            }
+
+            // Aplicar búsqueda de texto
+            if (searchQuery) {
+                const searchResults = idx.search(searchQuery);
+                const searchIds = searchResults.map(result => parseInt(result.ref));
+                filteredDocs = filteredDocs.filter(doc => searchIds.includes(doc.id));
+            }
+
+            displayDocuments(filteredDocs);
+        }
+
+        function displayDocuments(docs) {
+            const container = document.getElementById('documentList');
+            container.innerHTML = '';
+
+            docs.forEach(doc => {
+                const docElement = document.createElement('div');
+                docElement.className = 'document-card';
+                docElement.innerHTML = `
+                    <h3>${doc.title}</h3>
+                    <p>${doc.description}</p>
+                    <div>
+                        ${doc.tags.map(tag => <span class="tag">${tag}</span>).join('')}
+                    </div>
+                `;
+                container.appendChild(docElement);
+            });
+        }
+
+        // Mostrar todos los documentos al cargar
+        displayDocuments(documents);
+    </script>
+</body>
+</html>
