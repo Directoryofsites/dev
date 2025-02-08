@@ -70,7 +70,7 @@
 
         <ul id="study-list" class="study-list"></ul>
         <h2>Archivos PDF Disponibles</h2>
-        <p id="error-message"></p> <!-- Mensaje de error aquí -->
+        <p id="error-message"></p>
         <ul id="pdf-list" class="study-list"></ul>
 
         <div id="study-content">
@@ -116,6 +116,30 @@
             document.getElementById("search-box").style.display = "block";
         }
 
+        function filterStudies() {
+            let query = document.getElementById("search-input").value.toLowerCase();
+            document.getElementById("study-list").innerHTML = "";
+            let filtered = studies.filter(study => 
+                study.title.toLowerCase().includes(query) || 
+                study.content.toLowerCase().includes(query)
+            );
+            
+            if (filtered.length === 0) {
+                let li = document.createElement("li");
+                li.textContent = "No se encontraron resultados";
+                document.getElementById("study-list").appendChild(li);
+            } else {
+                filtered.forEach(study => addStudyToList(study));
+            }
+        }
+
+        function searchByKeyword() {
+            document.getElementById("search-input").placeholder = "Buscar por palabra clave...";
+            document.getElementById("search-input").value = "";
+            document.getElementById("search-input").focus();
+            showAllStudies();
+        }
+
         function searchByBook() {
             let book = prompt("Ingrese el libro de la Biblia");
             if (book) {
@@ -146,7 +170,8 @@
 
         async function fetchPDFs() {
             try {
-                const response = await fetch("TU_NUEVA_URL_DEL_SCRIPT");
+                // Reemplaza esta URL con la URL real de tu API
+                const response = await fetch("/api/pdfs");
                 if (!response.ok) throw new Error("Error al obtener los archivos PDF");
                 const pdfs = await response.json();
                 
@@ -169,6 +194,7 @@
             }
         }
 
+        // Inicializar la aplicación
         fetchPDFs();
         showAllStudies();
     </script>
