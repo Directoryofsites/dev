@@ -1,1 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Subir Estudios</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Subir Estudio Teológico</h2>
+        <input type="text" id="study-title" placeholder="Título del estudio" required>
+        <input type="date" id="study-date" required>
+        <input type="file" id="study-file" accept="application/pdf">
+        <button onclick="uploadStudy()">Subir</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "TU_API_KEY",
+            authDomain: "TU_AUTH_DOMAIN",
+            projectId: "TU_PROJECT_ID",
+            storageBucket: "TU_STORAGE_BUCKET",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+        const db = firebase.firestore();
+
+        function uploadStudy() {
+            const title = document.getElementById("study-title").value;
+            const date = document.getElementById("study-date").value;
+            const file = document.getElementById("study-file").files[0];
+
+            if (!title || !date || !file) {
+                alert("Todos los campos son obligatorios");
+                return;
+            }
+
+            const storageRef = storage.ref('studies/' + file.name);
+            storageRef.put(file).then(snapshot => {
+                return snapshot.ref.getDownloadURL();
+            }).then(downloadURL => {
+                db.collection("studies").add({
+                    title: title,
+                    date: date,
+                    url: downloadURL
+                });
+                document.getElementById("status").textContent = "¡Estudio subido con éxito!";
+            }).catch(error => {
+                console.error("Error al subir el archivo: ", error);
+            });
+        }
+    </script>
+</body>
+</html>
 
