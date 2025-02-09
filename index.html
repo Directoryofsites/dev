@@ -106,7 +106,7 @@
             
             pdfItems.forEach(item => {
                 const pdfTitle = item.textContent.toLowerCase();
-                if (queries.some(query => pdfTitle.includes(query))) {
+                if (queries.every(query => pdfTitle.includes(query))) {
                     item.style.display = "block";
                     pdfFound = true;
                 } else {
