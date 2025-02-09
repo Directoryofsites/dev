@@ -59,145 +59,18 @@
     <div class="container">
         <h1>Devocionales Bíblicos</h1>
         
-        <button onclick="showAllStudies()">Ver todos los estudios</button>
-        <button onclick="searchByKeyword()">Buscar por palabra</button>
-        <button onclick="searchByBook()">Buscar por libro de la Biblia</button>
-        <button onclick="searchByDate()">Buscar por fecha</button>
-        
         <div id="search-box" style="margin-top: 10px;">
-            <input type="text" id="search-input" placeholder="Escriba aquí..." oninput="filterStudies()">
+            <input type="text" id="search-input-1" placeholder="Palabra clave 1" oninput="filterStudies()">
+            <input type="text" id="search-input-2" placeholder="Palabra clave 2" oninput="filterStudies()">
+            <input type="text" id="search-input-3" placeholder="Palabra clave 3" oninput="filterStudies()">
         </div>
 
-        <ul id="study-list" class="study-list"></ul>
         <h2>Archivos PDF Disponibles</h2>
         <p id="error-message"></p>
         <ul id="pdf-list" class="study-list"></ul>
-
-        <div id="study-content">
-            <button onclick="goBack()">Volver al inicio</button>
-            <h2 id="study-title"></h2>
-            <p><strong>Fecha de publicación:</strong> <span id="study-date"></span></p>
-            <p id="study-body"></p>
-        </div>
     </div>
 
     <script>
-        const studies = [
-            { title: "La Soberanía de Dios", content: "Contenido del estudio sobre la soberanía de Dios.", date: "2024-02-01", books: ["Romanos"] },
-            { title: "El Amor de Cristo", content: "Contenido sobre el amor de Cristo en la vida del creyente.", date: "2024-01-15", books: ["Juan"] },
-            { title: "La Justificación por la Fe", content: "Estudio sobre la doctrina de la justificación.", date: "2023-12-10", books: ["Gálatas", "Romanos"] }
-        ];
-
-        function showAllStudies() {
-            document.getElementById("study-list").innerHTML = "";
-            studies.sort((a, b) => a.title.localeCompare(b.title));
-            studies.forEach(study => addStudyToList(study));
-        }
-
-        function addStudyToList(study) {
-            let li = document.createElement("li");
-            li.textContent = study.title;
-            li.onclick = () => showStudy(study);
-            document.getElementById("study-list").appendChild(li);
-        }
-
-        function showStudy(study) {
-            document.getElementById("study-content").style.display = "block";
-            document.getElementById("study-list").style.display = "none";
-            document.getElementById("search-box").style.display = "none";
-            document.getElementById("study-title").textContent = study.title;
-            document.getElementById("study-date").textContent = study.date;
-            document.getElementById("study-body").textContent = study.content;
-        }
-
-        function goBack() {
-            document.getElementById("study-content").style.display = "none";
-            document.getElementById("study-list").style.display = "block";
-            document.getElementById("search-box").style.display = "block";
-        }
-
-        function filterStudies() {
-            let query = document.getElementById("search-input").value.toLowerCase();
-            
-            // Filtrar estudios
-            document.getElementById("study-list").innerHTML = "";
-            let filtered = studies.filter(study => 
-                study.title.toLowerCase().includes(query) || 
-                study.content.toLowerCase().includes(query)
-            );
-            
-            if (filtered.length === 0) {
-                let li = document.createElement("li");
-                li.textContent = "No se encontraron resultados";
-                document.getElementById("study-list").appendChild(li);
-            } else {
-                filtered.forEach(study => addStudyToList(study));
-            }
-
-            // Filtrar PDFs
-            const pdfItems = document.querySelectorAll("#pdf-list li");
-            let pdfFound = false;
-            
-            pdfItems.forEach(item => {
-                const pdfTitle = item.textContent.toLowerCase();
-                if (pdfTitle.includes(query)) {
-                    item.style.display = "block";
-                    pdfFound = true;
-                } else {
-                    item.style.display = "none";
-                }
-            });
-
-            // Mostrar mensaje si no hay PDFs que coincidan
-            if (!pdfFound && query !== "") {
-                document.getElementById("error-message").textContent = "No se encontraron PDFs que coincidan con la búsqueda.";
-            } else {
-                document.getElementById("error-message").textContent = "";
-            }
-        }
-
-        function searchByKeyword() {
-            document.getElementById("search-input").placeholder = "Buscar por palabra clave...";
-            document.getElementById("search-input").value = "";
-            document.getElementById("error-message").textContent = "";
-            document.getElementById("search-input").focus();
-            showAllStudies();
-            
-            // Mostrar todos los PDFs
-            const pdfItems = document.querySelectorAll("#pdf-list li");
-            pdfItems.forEach(item => {
-                item.style.display = "block";
-            });
-        }
-
-        function searchByBook() {
-            let book = prompt("Ingrese el libro de la Biblia");
-            if (book) {
-                book = book.toLowerCase(); // Normalizar a minúsculas
-                document.getElementById("study-list").innerHTML = "";
-                let filtered = studies.filter(study => study.books.some(b => b.toLowerCase() === book));
-                if (filtered.length === 0) {
-                    alert("No se encontraron estudios para este libro.");
-                }
-                filtered.forEach(study => addStudyToList(study));
-            }
-        }
-
-        function searchByDate() {
-            let date = prompt("Ingrese la fecha en formato YYYY-MM-DD");
-            let dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(date)) {
-                alert("Formato de fecha incorrecto. Use YYYY-MM-DD.");
-                return;
-            }
-            document.getElementById("study-list").innerHTML = "";
-            let filtered = studies.filter(study => study.date === date);
-            if (filtered.length === 0) {
-                alert("No se encontraron estudios para esta fecha.");
-            }
-            filtered.forEach(study => addStudyToList(study));
-        }
-
         async function fetchPDFs() {
             try {
                 const response = await fetch("https://script.google.com/macros/s/AKfycbzvSw20KmDsWQQFfL9HJlusoKVX1ECXOiUmAOi7LOR-8GOmqVL9g4PsWVOxnUCZDEzvJA/exec");
@@ -216,16 +89,36 @@
                     li.appendChild(link);
                     pdfList.appendChild(li);
                 });
-
             } catch (error) {
                 document.getElementById("error-message").textContent = "No se pudieron cargar los PDFs.";
                 console.error("Error cargando los PDFs:", error);
             }
         }
 
+        function filterStudies() {
+            let query1 = document.getElementById("search-input-1").value.toLowerCase();
+            let query2 = document.getElementById("search-input-2").value.toLowerCase();
+            let query3 = document.getElementById("search-input-3").value.toLowerCase();
+            let queries = [query1, query2, query3].filter(q => q !== "");
+            
+            const pdfItems = document.querySelectorAll("#pdf-list li");
+            let pdfFound = false;
+            
+            pdfItems.forEach(item => {
+                const pdfTitle = item.textContent.toLowerCase();
+                if (queries.some(query => pdfTitle.includes(query))) {
+                    item.style.display = "block";
+                    pdfFound = true;
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            document.getElementById("error-message").textContent = pdfFound ? "" : "No se encontraron PDFs que coincidan con la búsqueda.";
+        }
+
         // Inicializar la aplicación
         fetchPDFs();
-        showAllStudies();
     </script>
 </body>
 </html>
