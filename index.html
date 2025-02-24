@@ -618,15 +618,16 @@
 
     <script>
         // ==========================================
-        // CONFIGURACIÓN DE FIREBASE - REEMPLAZAR CON TUS CREDENCIALES
+        // CONFIGURACIÓN DE FIREBASE CON TUS CREDENCIALES
         // ==========================================
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "tu-proyecto.firebaseapp.com",
-            projectId: "tu-proyecto",
-            storageBucket: "tu-proyecto.appspot.com",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID",
-            appId: "TU_APP_ID"
+            apiKey: "AIzaSyAAMEnTXBufZ6LJW7eTVjijjxyoFcuftss",
+            authDomain: "mensajes-7a793.firebaseapp.com",
+            projectId: "mensajes-7a793",
+            storageBucket: "mensajes-7a793.firebasestorage.app",
+            messagingSenderId: "852650512912",
+            appId: "1:852650512912:web:7e8c63b701e96c938e7095",
+            measurementId: "G-7LMZF0NJ8K"
         };
         
         // Inicializar Firebase
@@ -735,4 +736,13 @@
                 document.getElementById('church-logo').src = logoUrl;
                 document.title = nombre;
                 
-                showSuccess('Configuración guardada correct
+                showSuccess('Configuración guardada correctamente');
+                closeModal('siteSettingsModal');
+            } catch (error) {
+                showError('Error al guardar la configuración: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Carga todas las carpetas desde
