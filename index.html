@@ -3,14 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de PDFs</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <title>Sistema de Gestión de PDFs</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <!-- PDF.js para visualizar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    
     <style>
         :root {
             --primary-color: #2c3e50;
             --secondary-color: #3498db;
             --background-color: #f5f7fa;
             --border-color: #dce4ec;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
         }
 
         * {
@@ -26,9 +38,15 @@
         }
 
         .container {
-            width: 100%;
-            padding: 10px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
         }
 
         .header {
@@ -36,16 +54,49 @@
             color: white;
             padding: 1rem;
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 2rem;
             border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-logo img {
+            max-height: 60px;
+            max-width: 100px;
+            border-radius: 5px;
+        }
+
         .admin-controls {
             display: flex;
             gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                padding: 15px 10px;
+            }
+            
+            .header-logo {
+                margin-bottom: 15px;
+            }
+            
+            .admin-controls {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .btn {
+                margin-bottom: 5px;
+            }
         }
 
         .btn {
@@ -62,30 +113,65 @@
             color: white;
         }
 
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
         .btn-danger {
-            background: #e74c3c;
+            background: var(--danger-color);
             color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
         }
 
         .search-container {
             display: flex;
+            flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
             justify-content: center;
         }
 
         .search-container input {
-            padding: 8px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            width: 200px;
+            flex: 1;
+            min-width: 120px;
+            max-width: 250px;
+        }
+
+        @media (max-width: 576px) {
+            .search-container input {
+                flex-basis: 100%;
+                max-width: 100%;
+            }
         }
 
         .content {
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 20px;
-            height: calc(100vh - 180px);
+            height: calc(100vh - 220px);
+            min-height: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
         }
 
         .folders-panel {
@@ -94,6 +180,7 @@
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             overflow-y: auto;
+            height: 100%;
         }
 
         .viewer-panel {
@@ -106,10 +193,18 @@
             height: 100%;
         }
 
+        @media (max-width: 768px) {
+            .folders-panel, .viewer-panel {
+                height: 500px;
+            }
+        }
+
         #pdfViewer {
+            flex: 1;
+            border: none;
             width: 100%;
             height: 100%;
-            border: none;
+            min-height: 400px;
         }
 
         .folder {
@@ -119,17 +214,33 @@
         }
 
         .folder-header {
-            padding: 10px;
+            padding: 12px;
             background: #f8f9fa;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
+        }
+
+        .folder-header:hover {
+            background: #e9ecef;
+        }
+
+        .folder-counter {
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
         }
 
         .folder-content {
             display: none;
             padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
         }
 
         .folder-content.active {
@@ -137,7 +248,7 @@
         }
 
         .pdf-item {
-            padding: 8px;
+            padding: 8px 10px;
             margin: 5px 0;
             background: #f8f9fa;
             border-radius: 4px;
@@ -151,6 +262,65 @@
             background: #e9ecef;
         }
 
+        .pdf-item-title {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .folder-actions, .pdf-actions {
+            display: none;
+        }
+
+        .admin-mode .folder-actions,
+        .admin-mode .pdf-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .folder-add-pdf {
+            background-color: var(--success-color);
+            color: white;
+            font-size: 16px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .folder-add-pdf:hover {
+            background-color: #27ae60;
+        }
+
+        .pdf-delete {
+            color: var(--danger-color);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 5px;
+        }
+
+        .breadcrumb {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -158,9 +328,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.7);
             align-items: center;
             justify-content: center;
+            z-index: 100;
         }
 
         .modal.active {
@@ -169,66 +340,187 @@
 
         .modal-content {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 8px;
             width: 90%;
             max-width: 500px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
-        .admin-controls button {
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
             display: none;
         }
 
-        /* Estilos para móvil */
-        @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
+        .loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
 
-            .viewer-panel {
-                height: 70vh;
-            }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-            .search-container {
-                flex-direction: column;
-            }
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+        }
 
-            .search-container input {
-                width: 100%;
-            }
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #ddd;
+        }
 
-            .header {
-                flex-direction: column;
-                gap: 10px;
-            }
+        #error-message, #success-message {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
 
-            .admin-controls {
-                width: 100%;
-                justify-content: center;
-            }
+        #error-message {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        #success-message {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        .file-upload-progress {
+            height: 5px;
+            width: 100%;
+            background-color: #eee;
+            margin-top: 10px;
+            border-radius: 3px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--secondary-color);
+            transition: width 0.3s;
+        }
+
+        .empty-folder-message {
+            padding: 15px;
+            text-align: center;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Iconos para las carpetas y pdfs */
+        .folder-icon {
+            margin-right: 8px;
+        }
+
+        .pdf-icon {
+            margin-right: 8px;
+            color: #e74c3c;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>RESUMENES MENSAJES BIBLICOS</h1>
+            <div class="header-logo">
+                <img id="church-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAACXBIWXMAAAsTAAALEwEAmpwYAAAFHUlEQVR4nO2dW4hVVRjHf5PjhZnxMl0eohLDMi9hoV2oh5KaIKLbQ5EQ0UuZFyJ66CHIoMKegl6KpKK3CiHCHrpAZRcqFcPUHG/RNDIzo97G0xLWwpmz9tpr77332mfvfX4wDMOcs/b6vv3fb31r7bXWgSAIgiAIgiAIgiAIgiAIgiAIgiAIgiAIPM6c2VWWMnA9MAO4BhgNDAcGAAeATcAG4EtgDfCbPkJAZgErgZPAaY9yBHgDmBhKQCB64FXgbwdhbOU0sBwYlrdQNwOHHcV4Tse/ZeRZLgTeA/5JEWO+8UypvwSZ4FtM+0PX6W7JvbUuOAwTuQDXAN85/IpOAOuB94EXdV/zAPAAMA+4LY/mmolZOoFNHH4CLjbUMwS4TzcAE4BRQCnpN6pFDgeuBZZoAfMSAeBt3RhZPzsiEWD+fmRhXS89B/t25+O8Oobc1TXhG61L/gPutv4e9Z8lLpUPSPl7UeOPx76LnAf0bwmB54A+U0XHgIGGv0s6p4guQD6F9wzvr9ZiRB9pMqKcmSLsJ0sZ5Xnfs5bPvWq5Lx0RMVS0JuE7IzxFbLLc11Me91VnxdBYjtWGN2uMgwjbbTyNDcIYR0EmAtxhsFvvGL5zjmMrs9ly3xMe91WHRRgm3DcYKnvQ85ezw/DZJUFGWe4Z7zPEUKeUu9F8NjZlVIbofnk6/0kY6tTnKBGdjWVm9tEQ1qnCTUHKpO6/p3A/2Rl8GtNJeYVCxlzgEbVQpY3lIQT5o4BxsiDdVlCJzQEUKVIEabYRnA0lZr7TGGEVJGq+dJkX8rQJBIK2COEFaVYHkb8gExJMdxmMCjp5eK3HrHKc/6y3oPdriyA+gnxsec6TIZJkd2HaRFnxEeQxS+xDZVCGLNc5U7kgPpNStwC/Wj7/YSCni1wWWO0Z5OXLZpuXA8d90mZkLsgR4KgxQj/+tDxytkHbFiRSrhXDZ6vGy5UyMM/znCFjQU6odXBz3N3GrK7s6nqBGQ82t4Cz2h2M/qBEuL2EtPBrYFWshLiDTHjYTHnJEJ/KXJCTqlmZ5FHZDMMGzrTgX9vO78OAd4AfDPf7q/qWAXlS+ZJsEzC2ZnU9kPA9I5vITa5m6yvASbWsZZLn7ioZMVF3W01JzY0GE2OOTtj5lk05uKu1uqt9JkGMCT5uJl4FWuVPvUJxv8MxTmuCG3XsS9U45zdXgfJgom5gNmZoiXkR+NswC9xmrDgbQZLMNaFfyRXAL4YEiDznCwZaL2KD8qTYFu/ej60O2W8h2Z6xIG14y0pT1utFvLsSnKhPqwqHqb7lEOKpWVi6zT3qvLR1Gr0edrujtNzRXFVmbXCiVWYBT+iJwFa4GthriHWo8OzOGgx8lvDcPmOo8vv6uPW7Zg1MZl2W+5KaGTk5o4XkfNb3S+xLQifqlxbdZnSQpxzWyI+pE7IudJL+gLPaT2CcdTGkAzd39OlsSc6NkR9wdwdt3izVF5yV+LTanO7q4JYxtDEoFYfFumUdtDQ+qslRmSQ9S9y2NNZHkDSVsQwBpqqlKssV8aA0+5PbsQf1Jt28XKKORfQ4ruEfUWvi29GilcR4tbcj1A77LLjW5aUXebs6UDDPkpuoTIrKL/2CcLhbL2yc3mklj4U4aBWEkergdJ4HrYIQtZCR+tlQdVFX0EWZrnfrRWtHUbdNqiOtCgRBEARBEARBEARBEARBEARBEARBEARBEEKR/Ae0IG+6GTCyMAAAAABJRU5ErkJggg==" alt="Logo">
+                <h1 id="church-name">RESUMENES MENSAJES BIBLICOS</h1>
+            </div>
             <div class="admin-controls">
-                <button id="adminLoginBtn" class="btn btn-primary">Admin</button>
-                <button id="addFolderBtn" class="btn btn-primary">Nueva Carpeta</button>
-                <button id="addPdfBtn" class="btn btn-primary">Agregar PDF</button>
-                <button id="logoutBtn" class="btn btn-danger">Salir</button>
+                <button id="adminLoginBtn" class="btn btn-primary">Modo Administrador</button>
+                <button id="siteSettingsBtn" class="btn btn-primary" style="display: none;">Configurar Sitio</button>
+                <button id="addFolderBtn" class="btn btn-success" style="display: none;">Nueva Carpeta</button>
+                <button id="logoutBtn" class="btn btn-danger" style="display: none;">Cerrar Sesión</button>
             </div>
         </div>
 
         <div class="search-container">
-            <input type="text" id="searchPdf" placeholder="Buscar PDFs...">
+            <input type="text" id="search1" placeholder="Palabra clave 1" onkeyup="searchPDFs()">
+            <input type="text" id="search2" placeholder="Palabra clave 2" onkeyup="searchPDFs()">
+            <input type="text" id="search3" placeholder="Palabra clave 3" onkeyup="searchPDFs()">
         </div>
 
+        <div id="error-message"></div>
+        <div id="success-message"></div>
+
         <div class="content">
-            <div class="folders-panel" id="folders-container">
-                <!-- Las carpetas se cargarán aquí -->
+            <div class="folders-panel">
+                <div class="breadcrumb">
+                    <a href="#" onclick="showFolders()">📁 Categorías</a>
+                </div>
+                <div id="folders-container">
+                    <div class="empty-state">
+                        <div>📂</div>
+                        <p>No hay carpetas disponibles</p>
+                    </div>
+                </div>
             </div>
             <div class="viewer-panel">
                 <iframe id="pdfViewer"></iframe>
@@ -236,218 +528,194 @@
         </div>
     </div>
 
-    <!-- Modal Login -->
-    <div id="loginModal" class="modal">
+    <!-- Modal de Admin Login -->
+    <div id="adminModal" class="modal">
         <div class="modal-content">
-            <h2>Login Administrador</h2>
-            <input type="password" id="adminPass" placeholder="Contraseña">
-            <button onclick="login()" class="btn btn-primary">Entrar</button>
-            <button onclick="closeModal('loginModal')" class="btn btn-danger">Cancelar</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Acceso Administrador</h2>
+                <button class="modal-close" onclick="closeModal('adminModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="adminPassword">
+            </div>
+            <div class="form-footer">
+                <button class="btn btn-danger" onclick="closeModal('adminModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="verifyAdminPassword()">Acceder</button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Nueva Carpeta -->
+    <!-- Modal de Configuración del Sitio -->
+    <div id="siteSettingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Configuración del Sitio</h2>
+                <button class="modal-close" onclick="closeModal('siteSettingsModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre de la Iglesia:</label>
+                <input type="text" id="churchName" placeholder="Nombre de la iglesia">
+            </div>
+            <div class="form-group">
+                <label>Logo de la Iglesia:</label>
+                <input type="file" id="churchLogo" accept="image/*">
+            </div>
+            <div class="form-footer">
+                <button class="btn btn-danger" onclick="closeModal('siteSettingsModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveSiteSettings()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Nueva Carpeta -->
     <div id="folderModal" class="modal">
         <div class="modal-content">
-            <h2>Nueva Carpeta</h2>
-            <input type="text" id="folderName" placeholder="Nombre de la carpeta">
-            <button onclick="createFolder()" class="btn btn-primary">Crear</button>
-            <button onclick="closeModal('folderModal')" class="btn btn-danger">Cancelar</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Nueva Carpeta</h2>
+                <button class="modal-close" onclick="closeModal('folderModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Nombre de la carpeta:</label>
+                <input type="text" id="folderName" placeholder="Nombre de la categoría">
+            </div>
+            <div class="form-group">
+                <label>Descripción (opcional):</label>
+                <textarea id="folderDescription" rows="3" placeholder="Descripción breve"></textarea>
+            </div>
+            <div class="form-footer">
+                <button class="btn btn-danger" onclick="closeModal('folderModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveFolder()">Guardar</button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Agregar PDF -->
-    <div id="pdfModal" class="modal">
+    <!-- Modal para Añadir PDFs a una carpeta -->
+    <div id="addPdfModal" class="modal">
         <div class="modal-content">
-            <h2>Agregar PDF</h2>
-            <select id="folderSelect">
-                <!-- Las carpetas se cargarán aquí -->
-            </select>
-            <input type="file" id="pdfFile" accept=".pdf" multiple>
-            <button onclick="addPdf()" class="btn btn-primary">Agregar</button>
-            <button onclick="closeModal('pdfModal')" class="btn btn-danger">Cancelar</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Añadir PDFs a <span id="folderNameLabel"></span></h2>
+                <button class="modal-close" onclick="closeModal('addPdfModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Seleccionar PDFs:</label>
+                <input type="file" id="pdfFiles" multiple accept=".pdf">
+                <div class="file-upload-progress">
+                    <div class="progress-bar" id="uploadProgress"></div>
+                </div>
+            </div>
+            <div class="form-footer">
+                <button class="btn btn-danger" onclick="closeModal('addPdfModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="uploadPDFs()">Subir PDFs</button>
+            </div>
         </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            // REEMPLAZAR CON TUS CREDENCIALES DE FIREBASE
+            apiKey: "TU_API_KEY",
+            authDomain: "tu-proyecto.firebaseapp.com",
+            projectId: "tu-proyecto",
+            storageBucket: "tu-proyecto.appspot.com",
+            messagingSenderId: "TU_MESSAGING_SENDER_ID",
+            appId: "TU_APP_ID"
+        };
+        
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        
         // Variables globales
-        const ADMIN_PASSWORD = 'admin123';
-        let isAdmin = false;
-        let folders = JSON.parse(localStorage.getItem('folders')) || {};
+        const ADMIN_PASSWORD = 'admin123'; // Cambiar en producción
+        let isAdminMode = false;
+        let currentFolderId = null;
 
         // Event Listeners
-        document.getElementById('adminLoginBtn').addEventListener('click', () => showModal('loginModal'));
-        document.getElementById('addFolderBtn').addEventListener('click', () => showModal('folderModal'));
-        document.getElementById('addPdfBtn').addEventListener('click', showAddPdfModal);
-        document.getElementById('logoutBtn').addEventListener('click', logout);
-        document.getElementById('searchPdf').addEventListener('input', searchPdfs);
+        document.getElementById('adminLoginBtn').addEventListener('click', () => openModal('adminModal'));
+        document.getElementById('logoutBtn').addEventListener('click', logoutAdmin);
+        document.getElementById('addFolderBtn').addEventListener('click', () => openModal('folderModal'));
+        document.getElementById('siteSettingsBtn').addEventListener('click', () => openModal('siteSettingsModal'));
 
-        // Funciones principales
-        function showModal(modalId) {
-            document.getElementById(modalId).classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        function login() {
-            const password = document.getElementById('adminPass').value;
-            if (password === ADMIN_PASSWORD) {
-                isAdmin = true;
-                document.getElementById('adminLoginBtn').style.display = 'none';
-                document.getElementById('addFolderBtn').style.display = 'inline-block';
-                document.getElementById('addPdfBtn').style.display = 'inline-block';
-                document.getElementById('logoutBtn').style.display = 'inline-block';
-                closeModal('loginModal');
-                renderFolders();
-            } else {
-                alert('Contraseña incorrecta');
-            }
-        }
-
-        function logout() {
-            isAdmin = false;
-            document.getElementById('adminLoginBtn').style.display = 'inline-block';
-            document.getElementById('addFolderBtn').style.display = 'none';
-            document.getElementById('addPdfBtn').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'none';
-            renderFolders();
-        }
-
-        function createFolder() {
-            const name = document.getElementById('folderName').value;
-            if (!name) {
-                alert('Por favor ingrese un nombre para la carpeta');
-                return;
-            }
-            
-            const folderId = 'folder_' + Date.now();
-            folders[folderId] = {
-                name: name,
-                pdfs: []
-            };
-            
-            localStorage.setItem('folders', JSON.stringify(folders));
-            closeModal('folderModal');
-            renderFolders();
-        }
-
-        function showAddPdfModal() {
-            const select = document.getElementById('folderSelect');
-            select.innerHTML = '';
-            
-            for (let id in folders) {
-                const option = document.createElement('option');
-                option.value = id;
-                option.textContent = folders[id].name;
-                select.appendChild(option);
-            }
-            
-            showModal('pdfModal');
-        }
-
-        async function addPdf() {
-            const folderId = document.getElementById('folderSelect').value;
-            const files = document.getElementById('pdfFile').files;
-            
-            if (!files.length) {
-                alert('Por favor seleccione al menos un archivo PDF');
-                return;
-            }
-
-            for (let file of files) {
-                const reader = new FileReader();
-                const pdfData = await new Promise(resolve => {
-                    reader.onload = e => resolve(e.target.result);
-                    reader.readAsDataURL(file);
-                });
-
-                folders[folderId].pdfs.push({
-                    name: file.name,
-                    data: pdfData
-                });
-            }
-
-            localStorage.setItem('folders', JSON.stringify(folders));
-            closeModal('pdfModal');
-            renderFolders();
-        }
-
-        function deletePdf(folderId, pdfIndex) {
-            if (confirm('¿Está seguro de eliminar este PDF?')) {
-                folders[folderId].pdfs.splice(pdfIndex, 1);
-                localStorage.setItem('folders', JSON.stringify(folders));
-                renderFolders();
-            }
-        }
-
-        function deleteFolder(folderId) {
-            if (folders[folderId].pdfs.length > 0) {
-                alert('No se puede eliminar una carpeta que contiene PDFs');
-                return;
-            }
-            
-            if (confirm('¿Está seguro de eliminar esta carpeta?')) {
-                delete folders[folderId];
-                localStorage.setItem('folders', JSON.stringify(folders));
-                renderFolders();
-            }
-        }
-
-        function viewPdf(data) {
-            document.getElementById('pdfViewer').src = data;
-        }
-
-        function searchPdfs() {
-            const searchText = document.getElementById('searchPdf').value.toLowerCase();
-            const pdfItems = document.querySelectorAll('.pdf-item');
-            
-            pdfItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(searchText) ? '' : 'none';
-            });
-        }
-
-        function renderFolders() {
-            const container = document.getElementById('folders-container');
-            container.innerHTML = '';
-
-            for (let id in folders) {
-                const folder = folders[id];
-                const folderDiv = document.createElement('div');
-                folderDiv.className = 'folder';
+        // Funciones de inicialización
+        async function init() {
+            showLoading();
+            try {
+                // Cargar configuración del sitio
+                await loadSiteSettings();
                 
-                folderDiv.innerHTML = `
-                    <div class="folder-header">
-                        <span>${folder.name}</span>
-                        ${isAdmin ? `<button class="btn btn-danger" onclick="deleteFolder('${id}')">Eliminar</button>` : ''}
-                    </div>
-                    <div class="folder-content">
-                        ${folder.pdfs.map((pdf, index) => `
-                            <div class="pdf-item">
-                                <span onclick="viewPdf('${pdf.data}')">${pdf.name}</span>
-                                ${isAdmin ? `<button class="btn btn-danger" onclick="deletePdf('${id}', ${index})">Eliminar</button>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-
-                container.appendChild(folderDiv);
+                // Cargar carpetas
+                await loadFolders();
                 
-                // Agregar evento para mostrar/ocultar contenido
-                const header = folderDiv.querySelector('.folder-header');
-                const content = folderDiv.querySelector('.folder-content');
-                header.addEventListener('click', () => {
-                    content.classList.toggle('active');
-                });
+                // Comprobar si hay sesión de administrador guardada
+                const adminMode = localStorage.getItem('adminMode');
+                if (adminMode === 'true') {
+                    isAdminMode = true;
+                    document.body.classList.add('admin-mode');
+                    document.getElementById('addFolderBtn').style.display = 'inline-block';
+                    document.getElementById('siteSettingsBtn').style.display = 'inline-block';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
+                    document.getElementById('adminLoginBtn').style.display = 'none';
+                }
+            } catch (error) {
+                showError('Error al inicializar la aplicación: ' + error.message);
+            } finally {
+                hideLoading();
             }
         }
 
-        // Inicialización
-        window.onload = function() {
-            renderFolders();
-        };
-    </script>
-</body>
-</html>
+        // Carga la configuración del sitio desde Firestore
+        async function loadSiteSettings() {
+            try {
+                const docRef = db.collection('configuracion').doc('sitio');
+                const doc = await docRef.get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Actualizar nombre de la iglesia
+                    if (data.nombre) {
+                        document.getElementById('church-name').textContent = data.nombre;
+                        document.title = data.nombre;
+                    }
+                    
+                    // Actualizar logo si existe
+                    if (data.logoUrl) {
+                        document.getElementById('church-logo').src = data.logoUrl;
+                    }
+                } else {
+                    // Si no existe el documento, crearlo con valores predeterminados
+                    await db.collection('configuracion').doc('sitio').set({
+                        nombre: 'RESUMENES MENSAJES BIBLICOS',
+                        logoUrl: document.getElementById('church-logo').src
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar la configuración:', error);
+            }
+        }
+
+        // Guarda la configuración del sitio
+        async function saveSiteSettings() {
+            showLoading();
+            
+            try {
+                const nombre = document.getElementById('churchName').value.trim();
+                const logoFile = document.getElementById('churchLogo').files[0];
+                
+                if (!nombre) {
+                    throw new Error('El nombre no puede estar vacío');
+                }
+                
+                let logoUrl = document.getElementById('church-logo').src;
+                
+                // Si hay un nuevo logo, subirlo a Firebase Storage
+                if (logoFile) {
+                    const storageRef = storage.ref(`configur
