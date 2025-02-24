@@ -748,3 +748,398 @@
                 showError('Error al inicializar la aplicación: ' + error.message);
                 console.error(error);
             } finally {
+hideLoading();
+            }
+        }
+
+        // Carga la configuración del sitio desde Firestore
+        async function loadSiteSettings() {
+            try {
+                const docRef = db.collection('configuracion').doc('sitio');
+                const doc = await docRef.get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Actualizar nombre de la iglesia
+                    if (data.nombre) {
+                        document.getElementById('church-name').textContent = data.nombre;
+                        document.title = data.nombre;
+                    }
+                    
+                    // Actualizar logo si existe
+                    if (data.logoUrl) {
+                        document.getElementById('church-logo').src = data.logoUrl;
+                    }
+                } else {
+                    // Si no existe el documento, crearlo con valores predeterminados
+                    await db.collection('configuracion').doc('sitio').set({
+                        nombre: 'RESUMENES MENSAJES BIBLICOS',
+                        logoUrl: document.getElementById('church-logo').src
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar la configuración:', error);
+            }
+        }
+
+        // Guarda la configuración del sitio
+        async function saveSiteSettings() {
+            showLoading();
+            
+            try {
+                const nombre = document.getElementById('churchName').value.trim();
+                const logoFile = document.getElementById('churchLogo').files[0];
+                
+                if (!nombre) {
+                    throw new Error('El nombre no puede estar vacío');
+                }
+                
+                let logoUrl = document.getElementById('church-logo').src;
+                
+                // Si hay un nuevo logo, subirlo a Firebase Storage
+                if (logoFile) {
+                    const storageRef = storage.ref(`configuracion/logo-${Date.now()}`);
+                    await storageRef.put(logoFile);
+                    logoUrl = await storageRef.getDownloadURL();
+                }
+                // Guardar en Firestore
+                await db.collection('configuracion').doc('sitio').set({
+                    nombre: nombre,
+                    logoUrl: logoUrl
+                });
+                
+                // Actualizar UI
+                document.getElementById('church-name').textContent = nombre;
+                document.getElementById('church-logo').src = logoUrl;
+                document.title = nombre;
+                
+                showSuccess('Configuración guardada correctamente');
+                closeModal('siteSettingsModal');
+            } catch (error) {
+                showError('Error al guardar la configuración: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Carga todas las carpetas desde Firestore
+        async function loadFolders() {
+            try {
+                const snapshot = await db.collection('carpetas').get();
+                const foldersContainer = document.getElementById('folders-container');
+                
+                if (snapshot.empty) {
+                    foldersContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div>📂</div>
+                            <p>No hay carpetas disponibles</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                foldersContainer.innerHTML = '';
+                
+                snapshot.docs.forEach((doc, index) => {
+                    const folderData = doc.data();
+                    const folderId = doc.id;
+                    
+                    const folderElement = document.createElement('div');
+                    folderElement.className = 'folder';
+                    folderElement.innerHTML = `
+                        <div class="folder-header" onclick="toggleFolder('${folderId}')">
+                            <span>
+                                <span class="folder-icon">📁</span>
+                                ${index + 1}. ${folderData.nombre}
+                                <span class="folder-counter">${folderData.pdfCount || 0}</span>
+                            </span>
+                            <div class="folder-actions">
+                                <button class="folder-add-pdf" onclick="event.stopPropagation(); openAddPdfModal('${folderId}', '${folderData.nombre}')">
+                                    +
+                                </button>
+                                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteFolder('${folderId}')">
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="folder-content-${folderId}" class="folder-content">
+                            <div class="loading-folder">Cargando archivos...</div>
+                        </div>
+                    `;
+                    foldersContainer.appendChild(folderElement);
+                });
+            } catch (error) {
+                showError('Error al cargar las carpetas: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Guarda una nueva carpeta
+        async function saveFolder() {
+            showLoading();
+            
+            try {
+                const name = document.getElementById('folderName').value.trim();
+                const description = document.getElementById('folderDescription').value.trim();
+                
+                if (!name) {
+                    throw new Error('El nombre de la carpeta no puede estar vacío');
+                }
+                
+                // Crear nueva carpeta en Firestore
+                await db.collection('carpetas').add({
+                    nombre: name,
+                    descripcion: description,
+                    fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+                    pdfCount: 0
+                });
+                
+                showSuccess('Carpeta creada correctamente');
+                closeModal('folderModal');
+                await loadFolders();
+            } catch (error) {
+                showError('Error al crear la carpeta: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Elimina una carpeta (solo si está vacía)
+        async function deleteFolder(folderId) {
+            try {
+                // Verificar si la carpeta está vacía
+                const pdfSnapshot = await db.collection('carpetas').doc(folderId).collection('pdfs').get();
+                
+                if (!pdfSnapshot.empty) {
+                    return showError('No se puede eliminar la carpeta porque no está vacía. Elimina primero todos los PDFs.');
+                }
+                
+                if (confirm('¿Estás seguro de eliminar esta carpeta?')) {
+                    await db.collection('carpetas').doc(folderId).delete();
+                    showSuccess('Carpeta eliminada correctamente');
+                    await loadFolders();
+                }
+            } catch (error) {
+                showError('Error al eliminar la carpeta: ' + error.message);
+            }
+        }
+        // Abre una carpeta y carga sus PDFs
+        async function toggleFolder(folderId) {
+            const contentDiv = document.getElementById(`folder-content-${folderId}`);
+            const allContents = document.querySelectorAll('.folder-content');
+            
+            // Cerrar todas las carpetas abiertas
+            allContents.forEach(content => content.classList.remove('active'));
+            
+            // Abrir la carpeta seleccionada
+            contentDiv.classList.add('active');
+            
+            // Cargar PDFs si aún no se han cargado
+            if (contentDiv.innerHTML === '<div class="loading-folder">Cargando archivos...</div>') {
+                await loadPDFs(folderId);
+            }
+        }
+
+        // Carga los PDFs de una carpeta
+        async function loadPDFs(folderId) {
+            try {
+                const contentDiv = document.getElementById(`folder-content-${folderId}`);
+                const snapshot = await db.collection('carpetas').doc(folderId).collection('pdfs').get();
+                
+                if (snapshot.empty) {
+                    contentDiv.innerHTML = `<div class="empty-folder-message">No hay PDFs en esta carpeta</div>`;
+                    return;
+                }
+                
+                contentDiv.innerHTML = '';
+                
+                snapshot.docs.forEach(doc => {
+                    const pdfData = doc.data();
+                    const pdfElement = document.createElement('div');
+                    pdfElement.className = 'pdf-item';
+                    pdfElement.innerHTML = `
+                        <div class="pdf-item-title" onclick="viewPDF('${pdfData.url}')">
+                            <span class="pdf-icon">📄</span>
+                            ${pdfData.nombre}
+                        </div>
+                        <div class="pdf-actions">
+                            <button class="pdf-delete" onclick="event.stopPropagation(); deletePDF('${folderId}', '${doc.id}')">
+                                🗑️
+                            </button>
+                        </div>
+                    `;
+                    
+                    contentDiv.appendChild(pdfElement);
+                });
+            } catch (error) {
+                showError('Error al cargar los PDFs: ' + error.message);
+                console.error(error);
+            }
+        }
+        // Abre el modal para añadir PDFs a una carpeta
+        function openAddPdfModal(folderId, folderName) {
+            currentFolderId = folderId;
+            document.getElementById('folderNameLabel').textContent = folderName;
+            openModal('addPdfModal');
+        }
+
+        // Sube PDFs a una carpeta
+        async function uploadPDFs() {
+            const files = document.getElementById('pdfFiles').files;
+            
+            if (files.length === 0) {
+                return showError('Por favor, selecciona al menos un archivo PDF');
+            }
+            
+            showLoading();
+            document.querySelector('.file-upload-progress').style.display = 'block';
+            const progressBar = document.getElementById('uploadProgress');
+            let uploadedCount = 0;
+            
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const fileName = file.name;
+                    
+                    // Crear referencia en Storage
+                    const storageRef = storage.ref(`pdfs/${currentFolderId}/${Date.now()}_${fileName}`);
+                    
+                    // Subir archivo
+                    const uploadTask = storageRef.put(file);
+                    
+                    // Monitor de progreso
+                    uploadTask.on('state_changed', 
+                        (snapshot) => {
+                            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            progressBar.style.width = progress + '%';
+                        }, 
+                        (error) => {
+                            throw error;
+                        }, 
+                        async () => {
+                            // Obtener URL del archivo subido
+                            const downloadURL = await storageRef.getDownloadURL();
+                            
+                            // Guardar referencia en Firestore
+                            await db.collection('carpetas').doc(currentFolderId).collection('pdfs').add({
+                                nombre: fileName,
+                                url: downloadURL,
+                                fecha: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            
+                            // Actualizar contador de PDFs
+                            const folderRef = db.collection('carpetas').doc(currentFolderId);
+                            await folderRef.update({
+                                pdfCount: firebase.firestore.FieldValue.increment(1)
+                            });
+                            
+                            uploadedCount++;
+                            
+                            // Si es el último archivo, actualizar UI
+                            if (uploadedCount === files.length) {
+                                showSuccess(`${uploadedCount} PDFs subidos correctamente`);
+                                closeModal('addPdfModal');
+                                await loadFolders();
+                                await loadPDFs(currentFolderId);
+                                progressBar.style.width = '0%';
+                                document.querySelector('.file-upload-progress').style.display = 'none';
+                            }
+                        }
+                    );
+                }
+            } catch (error) {
+                showError('Error al subir los PDFs: ' + error.message);
+                progressBar.style.width = '0%';
+                document.querySelector('.file-upload-progress').style.display = 'none';
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Elimina un PDF
+        async function deletePDF(folderId, pdfId) {
+            if (confirm('¿Estás seguro de eliminar este PDF?')) {
+                try {
+                    showLoading();
+                    
+                    // Obtener referencia al PDF
+                    const pdfRef = db.collection('carpetas').doc(folderId).collection('pdfs').doc(pdfId);
+                    const pdfDoc = await pdfRef.get();
+                    
+                    if (pdfDoc.exists) {
+                        const pdfData = pdfDoc.data();
+                        
+                        // Eliminar archivo de Storage si es posible
+                        try {
+                            const fileRef = storage.refFromURL(pdfData.url);
+                            await fileRef.delete();
+                        } catch (storageError) {
+                            console.warn('No se pudo eliminar el archivo de Storage:', storageError);
+                        }
+                        
+                        // Eliminar documento de Firestore
+                        await pdfRef.delete();
+                        
+                        // Actualizar contador de PDFs
+                        await db.collection('carpetas').doc(folderId).update({
+                            pdfCount: firebase.firestore.FieldValue.increment(-1)
+                        });
+                        
+                        showSuccess('PDF eliminado correctamente');
+                        await loadPDFs(folderId);
+                        await loadFolders();
+                    }
+                } catch (error) {
+                    showError('Error al eliminar el PDF: ' + error.message);
+                } finally {
+                    hideLoading();
+                }
+            }
+        }
+
+        // Visualiza un PDF
+        function viewPDF(pdfUrl) {
+            document.getElementById('pdfViewer').src = pdfUrl;
+        }
+
+        // Función de búsqueda
+        function searchPDFs() {
+            const search1 = document.getElementById('search1').value.toLowerCase();
+            const search2 = document.getElementById('search2').value.toLowerCase();
+            const search3 = document.getElementById('search3').value.toLowerCase();
+            const searchTerms = [search1, search2, search3].filter(term => term);
+            
+            if (searchTerms.length === 0) {
+                // Si no hay términos de búsqueda, mostrar todos los PDFs
+                document.querySelectorAll('.pdf-item').forEach(item => {
+                    item.style.display = 'flex';
+                });
+                return;
+            }
+            
+            // Buscar en todos los PDFs visibles
+            document.querySelectorAll('.pdf-item').forEach(item => {
+                const pdfTitle = item.querySelector('.pdf-item-title').textContent.toLowerCase();
+                const matchesAll = searchTerms.every(term => pdfTitle.includes(term));
+                
+                item.style.display = matchesAll ? 'flex' : 'none';
+            });
+            
+            // Mostrar las carpetas que tienen PDFs coincidentes
+            document.querySelectorAll('.folder-content').forEach(folderContent => {
+                const hasMatchingPdfs = Array.from(folderContent.querySelectorAll('.pdf-item')).some(
+                    item => item.style.display !== 'none'
+                );
+                
+                if (hasMatchingPdfs) {
+                    folderContent.classList.add('active');
+                }
+            });
+        }
+
+        // Iniciar la aplicación cuando el documento esté listo
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
