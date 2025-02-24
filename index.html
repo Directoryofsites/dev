@@ -3,128 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESUMENES MENSAJES BIBLICOS</title>
+    <title>Sistema de Carpetas</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            text-align: center;
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f4;
+            background: #f5f5f5;
         }
+
         .container {
-            max-width: 800px;
-            margin: auto;
+            max-width: 1000px;
+            margin: 0 auto;
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        #search-box {
-            margin: 20px 0;
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
         }
-        #search-box input {
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .search-container input {
             padding: 8px;
-            margin: 5px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            width: calc(33% - 20px);
-            min-width: 150px;
+            width: 200px;
         }
+
         .folder {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
+            border: 1px solid #ddd;
             margin: 10px 0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .folder-header {
+            background: #f8f9fa;
             padding: 15px;
-            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
-            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .folder:hover {
-            background-color: #e9ecef;
-        }
-        .folder.active {
-            background-color: #e9ecef;
-            border-color: #007BFF;
-        }
+
         .folder-content {
             display: none;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            background-color: white;
+            padding: 15px;
+            background: white;
         }
-        .folder-content.visible {
+
+        .folder-content.active {
             display: block;
         }
-        .study-list {
+
+        .pdf-list {
             list-style: none;
             padding: 0;
-            text-align: left;
             margin: 0;
         }
-        .study-list li {
+
+        .pdf-list li {
             padding: 10px;
-            background: #f8f9fa;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #dee2e6;
+            border-bottom: 1px solid #eee;
         }
-        .study-list li a {
+
+        .pdf-list li:last-child {
+            border-bottom: none;
+        }
+
+        .pdf-list a {
+            color: #007bff;
             text-decoration: none;
-            color: #007BFF;
-            display: block;
         }
-        .study-list li a:hover {
+
+        .pdf-list a:hover {
             text-decoration: underline;
         }
-        .admin-button {
-            background-color: #6c757d;
-            color: white;
+
+        .admin-controls {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+
+        .btn {
             padding: 8px 16px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            margin: 20px 0;
-            font-size: 14px;
+            margin-left: 10px;
         }
-        .admin-button:hover {
-            background-color: #5a6268;
-        }
-        .add-folder-button {
-            background-color: #28a745;
+
+        .btn-primary {
+            background: #007bff;
             color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 20px 0;
-            font-size: 16px;
         }
-        .add-folder-button:hover {
-            background-color: #218838;
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
         }
-        .folder-actions {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            display: none;
-        }
-        .admin-mode .folder:hover .folder-actions {
-            display: block;
-        }
-        .folder-actions button {
-            margin-left: 5px;
-            padding: 5px 10px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            background: none;
-            font-size: 16px;
-        }
+
         .modal {
             display: none;
             position: fixed;
@@ -132,59 +121,51 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 1000;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
         }
+
+        .modal.active {
+            display: flex;
+        }
+
         .modal-content {
-            background-color: white;
-            margin: 15% auto;
+            background: white;
             padding: 20px;
-            border-radius: 5px;
-            width: 80%;
+            border-radius: 8px;
+            width: 90%;
             max-width: 500px;
         }
-        .modal input {
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
             width: 100%;
             padding: 8px;
-            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-        .modal-buttons {
-            text-align: right;
-            margin-top: 20px;
-        }
-        .modal-buttons button {
-            padding: 8px 16px;
-            margin-left: 10px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .modal-buttons .cancel {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-        }
-        .modal-buttons .save {
-            background-color: #28a745;
-            color: white;
-            border: none;
-        }
-        #error-message {
-            color: red;
-            margin-top: 10px;
-        }
-        #logout-button {
-            background-color: #dc3545;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+
+        .folder-actions {
             display: none;
         }
-        .admin-mode #logout-button {
-            display: inline-block;
+
+        .admin-mode .folder-actions {
+            display: block;
+        }
+
+        #error-message {
+            color: red;
+            text-align: center;
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -192,100 +173,109 @@
     <div class="container">
         <h1>RESUMENES MENSAJES BIBLICOS</h1>
         
-        <button id="admin-login" class="admin-button">🔒 Modo Administrador</button>
-        <button id="logout-button" onclick="logoutAdmin()">Cerrar Sesión</button>
-
-        <div id="search-box">
-            <input type="text" id="search-input-1" placeholder="Palabra clave 1" oninput="filterStudies()">
-            <input type="text" id="search-input-2" placeholder="Palabra clave 2" oninput="filterStudies()">
-            <input type="text" id="search-input-3" placeholder="Palabra clave 3" oninput="filterStudies()">
+        <div class="admin-controls">
+            <button id="adminLoginBtn" class="btn btn-primary">Modo Administrador</button>
+            <button id="logoutBtn" class="btn btn-danger" style="display: none;">Cerrar Sesión</button>
+            <button id="addFolderBtn" class="btn btn-primary" style="display: none;">Agregar Carpeta</button>
         </div>
 
-        <div class="admin-controls" style="display: none;">
-            <button class="add-folder-button" onclick="showNewFolderModal()">
-                📁 Crear Nueva Carpeta
-            </button>
+        <div class="search-container">
+            <input type="text" id="search1" placeholder="Palabra clave 1" onkeyup="searchPDFs()">
+            <input type="text" id="search2" placeholder="Palabra clave 2" onkeyup="searchPDFs()">
+            <input type="text" id="search3" placeholder="Palabra clave 3" onkeyup="searchPDFs()">
         </div>
 
-        <div id="folders-container">
-            <!-- Las carpetas se generarán dinámicamente aquí -->
-        </div>
-
-        <div id="admin-modal" class="modal">
-            <div class="modal-content">
-                <h2>Acceso Administrador</h2>
-                <input type="password" id="admin-password" placeholder="Contraseña de administrador">
-                <div class="modal-buttons">
-                    <button class="cancel" onclick="hideModal('admin-modal')">Cancelar</button>
-                    <button class="save" onclick="verifyAdminPassword()">Acceder</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="folder-modal" class="modal">
-            <div class="modal-content">
-                <h2 id="folder-modal-title">Nueva Carpeta</h2>
-                <input type="text" id="folder-name" placeholder="Nombre de la carpeta">
-                <input type="text" id="folder-script" placeholder="URL del Script de Google">
-                <input type="password" id="folder-password" placeholder="Contraseña para esta carpeta">
-                <div class="modal-buttons">
-                    <button class="cancel" onclick="hideModal('folder-modal')">Cancelar</button>
-                    <button class="save" onclick="saveFolder()">Guardar</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="verify-modal" class="modal">
-            <div class="modal-content">
-                <h2>Verificar Contraseña</h2>
-                <input type="password" id="verify-password" placeholder="Contraseña de la carpeta">
-                <div class="modal-buttons">
-                    <button class="cancel" onclick="hideModal('verify-modal')">Cancelar</button>
-                    <button class="save" onclick="verifyFolderPassword()">Verificar</button>
-                </div>
-            </div>
-        </div>
+        <div id="folders-container"></div>
 
         <p id="error-message"></p>
     </div>
 
+    <!-- Modal de Admin Login -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <h2>Acceso Administrador</h2>
+            <div class="form-group">
+                <label>Contraseña:</label>
+                <input type="password" id="adminPassword">
+            </div>
+            <button class="btn btn-primary" onclick="verifyAdminPassword()">Acceder</button>
+            <button class="btn btn-danger" onclick="closeModal('adminModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Nueva Carpeta -->
+    <div id="folderModal" class="modal">
+        <div class="modal-content">
+            <h2>Nueva Carpeta</h2>
+            <div class="form-group">
+                <label>Nombre de la carpeta:</label>
+                <input type="text" id="folderName">
+            </div>
+            <div class="form-group">
+                <label>URL del Script de Google:</label>
+                <input type="text" id="scriptUrl">
+            </div>
+            <div class="form-group">
+                <label>Contraseña de la carpeta:</label>
+                <input type="password" id="folderPassword">
+            </div>
+            <button class="btn btn-primary" onclick="saveFolder()">Guardar</button>
+            <button class="btn btn-danger" onclick="closeModal('folderModal')">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal de Verificación -->
+    <div id="verifyModal" class="modal">
+        <div class="modal-content">
+            <h2>Verificar Acceso</h2>
+            <div class="form-group">
+                <label>Contraseña de la carpeta:</label>
+                <input type="password" id="verifyPassword">
+            </div>
+            <button class="btn btn-primary" onclick="verifyFolderAccess()">Verificar</button>
+            <button class="btn btn-danger" onclick="closeModal('verifyModal')">Cancelar</button>
+        </div>
+    </div>
+
     <script>
-        // Configuración inicial
-        const ADMIN_PASSWORD = 'admin123'; // Cambiar por una contraseña segura
+        // Configuración
+        const ADMIN_PASSWORD = 'admin123'; // Cambiar en producción
         let isAdminMode = false;
-        let currentFolder = null;
+        let currentFolderId = null;
         let pendingAction = null;
 
-        // Cargar folders guardados
+        // Obtener folders guardados
         let folders = JSON.parse(localStorage.getItem('folders')) || {};
 
         // Event Listeners
-        document.getElementById('admin-login').addEventListener('click', () => showModal('admin-modal'));
+        document.getElementById('adminLoginBtn').addEventListener('click', () => openModal('adminModal'));
+        document.getElementById('logoutBtn').addEventListener('click', logoutAdmin);
+        document.getElementById('addFolderBtn').addEventListener('click', () => openModal('folderModal'));
 
         // Funciones principales
-        function showModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
         }
 
-        function hideModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-            if (modalId === 'folder-modal') {
-                document.getElementById('folder-name').value = '';
-                document.getElementById('folder-script').value = '';
-                document.getElementById('folder-password').value = '';
-                currentFolder = null;
-            }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            clearModalInputs(modalId);
+        }
+
+        function clearModalInputs(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.querySelectorAll('input').forEach(input => input.value = '');
         }
 
         function verifyAdminPassword() {
-            const password = document.getElementById('admin-password').value;
+            const password = document.getElementById('adminPassword').value;
             if (password === ADMIN_PASSWORD) {
                 isAdminMode = true;
                 document.body.classList.add('admin-mode');
-                document.querySelector('.admin-controls').style.display = 'block';
-                hideModal('admin-modal');
-                document.getElementById('admin-login').style.display = 'none';
-                document.getElementById('logout-button').style.display = 'inline-block';
+                document.getElementById('addFolderBtn').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.getElementById('adminLoginBtn').style.display = 'none';
+                closeModal('adminModal');
                 localStorage.setItem('adminMode', 'true');
             } else {
                 alert('Contraseña incorrecta');
@@ -295,39 +285,23 @@
         function logoutAdmin() {
             isAdminMode = false;
             document.body.classList.remove('admin-mode');
-            document.querySelector('.admin-controls').style.display = 'none';
-            document.getElementById('admin-login').style.display = 'inline-block';
-            document.getElementById('logout-button').style.display = 'none';
+            document.getElementById('addFolderBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('adminLoginBtn').style.display = 'inline-block';
             localStorage.removeItem('adminMode');
         }
 
-        function showNewFolderModal() {
-            currentFolder = null;
-            document.getElementById('folder-modal-title').textContent = 'Nueva Carpeta';
-            showModal('folder-modal');
-        }
-
-        function showEditFolderModal(folderId) {
-            currentFolder = folderId;
-            const folder = folders[folderId];
-            document.getElementById('folder-modal-title').textContent = 'Editar Carpeta';
-            document.getElementById('folder-name').value = folder.name;
-            document.getElementById('folder-script').value = folder.script;
-            document.getElementById('folder-password').value = folder.password;
-            showModal('folder-modal');
-        }
-
         function saveFolder() {
-            const name = document.getElementById('folder-name').value;
-            const script = document.getElementById('folder-script').value;
-            const password = document.getElementById('folder-password').value;
+            const name = document.getElementById('folderName').value;
+            const script = document.getElementById('scriptUrl').value;
+            const password = document.getElementById('folderPassword').value;
 
             if (!name || !script || !password) {
                 alert('Por favor complete todos los campos');
                 return;
             }
 
-            const folderId = currentFolder || `folder-${Date.now()}`;
+            const folderId = currentFolderId || `folder-${Date.now()}`;
             folders[folderId] = {
                 name,
                 script,
@@ -336,7 +310,7 @@
             };
 
             localStorage.setItem('folders', JSON.stringify(folders));
-            hideModal('folder-modal');
+            closeModal('folderModal');
             renderFolders();
         }
 
@@ -346,52 +320,51 @@
             renderFolders();
         }
 
-        function showVerifyModal(action, folderId) {
-            pendingAction = { action, folderId };
-            showModal('verify-modal');
+        function showVerifyModal(folderId, action) {
+            currentFolderId = folderId;
+            pendingAction = action;
+            openModal('verifyModal');
         }
 
-        function verifyFolderPassword() {
-            const password = document.getElementById('verify-password').value;
-            const folder = folders[pendingAction.folderId];
+        async function verifyFolderAccess() {
+            const password = document.getElementById('verifyPassword').value;
+            const folder = folders[currentFolderId];
 
             if (password === folder.password) {
-                hideModal('verify-modal');
-                if (pendingAction.action === 'open') {
-                    openFolder(pendingAction.folderId);
-                } else if (pendingAction.action === 'edit') {
-                    showEditFolderModal(pendingAction.folderId);
-                } else if (pendingAction.action === 'delete') {
-                    deleteFolder(pendingAction.folderId);
+                closeModal('verifyModal');
+                if (pendingAction === 'open') {
+                    await loadFolderContent(currentFolderId);
+                } else if (pendingAction === 'delete') {
+                    deleteFolder(currentFolderId);
                 }
             } else {
                 alert('Contraseña incorrecta');
             }
-            document.getElementById('verify-password').value = '';
         }
 
-        async function openFolder(folderId) {
+        async function loadFolderContent(folderId) {
             const folder = folders[folderId];
-            const content = document.getElementById(`content-${folderId}`);
+            const contentDiv = document.getElementById(`content-${folderId}`);
             
             try {
                 const response = await fetch(folder.script);
                 if (!response.ok) throw new Error('Error al cargar los PDFs');
                 const pdfs = await response.json();
                 
-                folders[folderId].pdfs = pdfs;
+                folder.pdfs = pdfs;
                 renderPDFs(folderId);
-                content.classList.add('visible');
+                contentDiv.classList.add('active');
             } catch (error) {
                 document.getElementById('error-message').textContent = 
-                    `Error al cargar los PDFs de la carpeta: ${error.message}`;
+                    `Error al cargar los PDFs: ${error.message}`;
             }
         }
 
         function renderPDFs(folderId) {
             const folder = folders[folderId];
-            const list = document.getElementById(`list-${folderId}`);
-            list.innerHTML = '';
+            const contentDiv = document.getElementById(`content-${folderId}`);
+            const pdfList = document.createElement('ul');
+            pdfList.className = 'pdf-list';
 
             folder.pdfs.forEach(pdf => {
                 const li = document.createElement('li');
@@ -400,8 +373,11 @@
                 a.textContent = pdf.name;
                 a.target = '_blank';
                 li.appendChild(a);
-                list.appendChild(li);
+                pdfList.appendChild(li);
             });
+
+            contentDiv.innerHTML = '';
+            contentDiv.appendChild(pdfList);
         }
 
         function renderFolders() {
@@ -410,10 +386,59 @@
 
             Object.entries(folders).forEach(([id, folder], index) => {
                 const folderDiv = document.createElement('div');
+                folderDiv.className = 'folder';
                 folderDiv.innerHTML = `
-                    <div class="folder" onclick="showVerifyModal('open', '${id}')">
+                    <div class="folder-header">
                         <span>${index + 1}. ${folder.name}</span>
-                        ${isAdminMode ? `
-                            <div class="folder-actions" onclick="event.stopPropagation()">
-                                <button onclick="showVerifyModal('edit', '${id}')">✏️</button>
-                                <button onclick="showVerifyModal('delete', '${id}')">🗑️</button>
+                        <div class="folder-actions">
+                            ${isAdminMode ? 
+                                `<button class="btn btn-danger" onclick="showVerifyModal('${id}', 'delete')">
+                                    Eliminar
+                                </button>` : ''
+                            }
+                            <button class="btn btn-primary" onclick="showVerifyModal('${id}', 'open')">
+                                Abrir
+                            </button>
+                        </div>
+                    </div>
+                    <div id="content-${id}" class="folder-content"></div>
+                `;
+                container.appendChild(folderDiv);
+            });
+        }
+
+        function searchPDFs() {
+            const search1 = document.getElementById('search1').value.toLowerCase();
+            const search2 = document.getElementById('search2').value.toLowerCase();
+            const search3 = document.getElementById('search3').value.toLowerCase();
+            const terms = [search1, search2, search3].filter(term => term);
+
+            Object.entries(folders).forEach(([id, folder]) => {
+                const contentDiv = document.getElementById(`content-${id}`);
+                if (!contentDiv) return;
+
+                const pdfItems = contentDiv.getElementsByTagName('li');
+                Array.from(pdfItems).forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    const matches = terms.every(term => text.includes(term));
+                    item.style.display = matches ? '' : 'none';
+                });
+            });
+        }
+
+        // Inicialización
+        function init() {
+            renderFolders();
+            if (localStorage.getItem('adminMode') === 'true') {
+                isAdminMode = true;
+                document.body.classList.add('admin-mode');
+                document.getElementById('addFolderBtn').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.getElementById('adminLoginBtn').style.display = 'none';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
