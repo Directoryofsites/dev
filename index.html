@@ -26,9 +26,9 @@
         }
 
         .container {
-            max-width: 100%;
-            margin: 0 auto;
+            width: 100%;
             padding: 10px;
+            margin: 0 auto;
         }
 
         .header {
@@ -41,23 +41,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .header h1 {
-                font-size: 1.5rem;
-            }
-
-            .admin-controls {
-                width: 100%;
-                justify-content: center;
-            }
         }
 
         .admin-controls {
@@ -89,7 +72,6 @@
             gap: 10px;
             margin-bottom: 20px;
             justify-content: center;
-            flex-wrap: wrap;
         }
 
         .search-container input {
@@ -103,14 +85,7 @@
             display: grid;
             grid-template-columns: 300px 1fr;
             gap: 20px;
-            height: calc(100vh - 200px);
-        }
-
-        @media (max-width: 768px) {
-            .content {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
+            height: calc(100vh - 180px);
         }
 
         .folders-panel {
@@ -119,7 +94,6 @@
             padding: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             overflow-y: auto;
-            height: 100%;
         }
 
         .viewer-panel {
@@ -133,11 +107,9 @@
         }
 
         #pdfViewer {
-            flex: 1;
-            border: none;
             width: 100%;
             height: 100%;
-            min-height: 500px;
+            border: none;
         }
 
         .folder {
@@ -189,7 +161,6 @@
             background: rgba(0,0,0,0.5);
             align-items: center;
             justify-content: center;
-            z-index: 1000;
         }
 
         .modal.active {
@@ -204,51 +175,38 @@
             max-width: 500px;
         }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-        }
-
-        .pdf-controls {
+        .admin-controls button {
             display: none;
         }
 
-        .admin-mode .pdf-controls {
-            display: flex;
-            gap: 5px;
-        }
+        /* Estilos para móvil */
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
 
-        .folder-actions {
-            display: none;
-        }
+            .viewer-panel {
+                height: 70vh;
+            }
 
-        .admin-mode .folder-actions {
-            display: flex;
-            gap: 5px;
-        }
+            .search-container {
+                flex-direction: column;
+            }
 
-        #findbox {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: none;
+            .search-container input {
+                width: 100%;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .admin-controls {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -257,21 +215,20 @@
         <div class="header">
             <h1>RESUMENES MENSAJES BIBLICOS</h1>
             <div class="admin-controls">
-                <button id="adminLoginBtn" class="btn btn-primary">Modo Administrador</button>
-                <button id="logoutBtn" class="btn btn-danger" style="display: none;">Cerrar Sesión</button>
-                <button id="addFolderBtn" class="btn btn-primary" style="display: none;">Nueva Carpeta</button>
+                <button id="adminLoginBtn" class="btn btn-primary">Admin</button>
+                <button id="addFolderBtn" class="btn btn-primary">Nueva Carpeta</button>
+                <button id="addPdfBtn" class="btn btn-primary">Agregar PDF</button>
+                <button id="logoutBtn" class="btn btn-danger">Salir</button>
             </div>
         </div>
 
         <div class="search-container">
-            <input type="text" id="search1" placeholder="Buscar en PDFs..." onkeyup="searchInPDF()">
-            <input type="text" id="search2" placeholder="Buscar en PDFs..." onkeyup="searchInPDF()">
-            <input type="text" id="search3" placeholder="Buscar en PDFs..." onkeyup="searchInPDF()">
+            <input type="text" id="searchPdf" placeholder="Buscar PDFs...">
         </div>
 
         <div class="content">
-            <div class="folders-panel">
-                <div id="folders-container"></div>
+            <div class="folders-panel" id="folders-container">
+                <!-- Las carpetas se cargarán aquí -->
             </div>
             <div class="viewer-panel">
                 <iframe id="pdfViewer"></iframe>
@@ -279,125 +236,123 @@
         </div>
     </div>
 
-    <!-- Modal de Admin Login -->
-    <div id="adminModal" class="modal">
+    <!-- Modal Login -->
+    <div id="loginModal" class="modal">
         <div class="modal-content">
-            <h2>Acceso Administrador</h2>
-            <div class="form-group">
-                <label>Contraseña:</label>
-                <input type="password" id="adminPassword">
-            </div>
-            <button class="btn btn-primary" onclick="verifyAdminPassword()">Acceder</button>
-            <button class="btn btn-danger" onclick="closeModal('adminModal')">Cancelar</button>
+            <h2>Login Administrador</h2>
+            <input type="password" id="adminPass" placeholder="Contraseña">
+            <button onclick="login()" class="btn btn-primary">Entrar</button>
+            <button onclick="closeModal('loginModal')" class="btn btn-danger">Cancelar</button>
         </div>
     </div>
 
-    <!-- Modal de Nueva Carpeta -->
+    <!-- Modal Nueva Carpeta -->
     <div id="folderModal" class="modal">
         <div class="modal-content">
             <h2>Nueva Carpeta</h2>
-            <div class="form-group">
-                <label>Nombre de la carpeta:</label>
-                <input type="text" id="folderName">
-            </div>
-            <button class="btn btn-primary" onclick="saveFolder()">Guardar</button>
-            <button class="btn btn-danger" onclick="closeModal('folderModal')">Cancelar</button>
+            <input type="text" id="folderName" placeholder="Nombre de la carpeta">
+            <button onclick="createFolder()" class="btn btn-primary">Crear</button>
+            <button onclick="closeModal('folderModal')" class="btn btn-danger">Cancelar</button>
         </div>
     </div>
 
-    <!-- Modal para Agregar PDFs -->
-    <div id="addPDFModal" class="modal">
+    <!-- Modal Agregar PDF -->
+    <div id="pdfModal" class="modal">
         <div class="modal-content">
-            <h2>Agregar PDFs</h2>
-            <div class="form-group">
-                <label>Seleccionar PDFs:</label>
-                <input type="file" id="pdfFiles" multiple accept=".pdf">
-            </div>
-            <button class="btn btn-primary" onclick="addPDFsToFolder()">Agregar</button>
-            <button class="btn btn-danger" onclick="closeModal('addPDFModal')">Cancelar</button>
+            <h2>Agregar PDF</h2>
+            <select id="folderSelect">
+                <!-- Las carpetas se cargarán aquí -->
+            </select>
+            <input type="file" id="pdfFile" accept=".pdf" multiple>
+            <button onclick="addPdf()" class="btn btn-primary">Agregar</button>
+            <button onclick="closeModal('pdfModal')" class="btn btn-danger">Cancelar</button>
         </div>
     </div>
 
     <script>
-        // Configuración
+        // Variables globales
         const ADMIN_PASSWORD = 'admin123';
-        let isAdminMode = false;
-        let currentFolder = null;
-
-        // Almacenamiento de carpetas y PDFs
+        let isAdmin = false;
         let folders = JSON.parse(localStorage.getItem('folders')) || {};
 
         // Event Listeners
-        document.getElementById('adminLoginBtn').addEventListener('click', () => openModal('adminModal'));
-        document.getElementById('logoutBtn').addEventListener('click', logoutAdmin);
-        document.getElementById('addFolderBtn').addEventListener('click', () => openModal('folderModal'));
+        document.getElementById('adminLoginBtn').addEventListener('click', () => showModal('loginModal'));
+        document.getElementById('addFolderBtn').addEventListener('click', () => showModal('folderModal'));
+        document.getElementById('addPdfBtn').addEventListener('click', showAddPdfModal);
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('searchPdf').addEventListener('input', searchPdfs);
 
         // Funciones principales
-        function openModal(modalId) {
+        function showModal(modalId) {
             document.getElementById(modalId).classList.add('active');
         }
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
-            const modal = document.getElementById(modalId);
-            modal.querySelectorAll('input').forEach(input => input.value = '');
         }
 
-        function verifyAdminPassword() {
-            const password = document.getElementById('adminPassword').value;
+        function login() {
+            const password = document.getElementById('adminPass').value;
             if (password === ADMIN_PASSWORD) {
-                isAdminMode = true;
-                document.body.classList.add('admin-mode');
-                document.getElementById('addFolderBtn').style.display = 'inline-block';
-                document.getElementById('logoutBtn').style.display = 'inline-block';
+                isAdmin = true;
                 document.getElementById('adminLoginBtn').style.display = 'none';
-                closeModal('adminModal');
-                localStorage.setItem('adminMode', 'true');
+                document.getElementById('addFolderBtn').style.display = 'inline-block';
+                document.getElementById('addPdfBtn').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                closeModal('loginModal');
                 renderFolders();
             } else {
                 alert('Contraseña incorrecta');
             }
         }
 
-        function logoutAdmin() {
-            isAdminMode = false;
-            document.body.classList.remove('admin-mode');
-            document.getElementById('addFolderBtn').style.display = 'none';
-            document.getElementById('logoutBtn').style.display = 'none';
+        function logout() {
+            isAdmin = false;
             document.getElementById('adminLoginBtn').style.display = 'inline-block';
-            localStorage.removeItem('adminMode');
+            document.getElementById('addFolderBtn').style.display = 'none';
+            document.getElementById('addPdfBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'none';
             renderFolders();
         }
 
-        async function saveFolder() {
+        function createFolder() {
             const name = document.getElementById('folderName').value;
-
             if (!name) {
                 alert('Por favor ingrese un nombre para la carpeta');
                 return;
             }
-
-            const folderId = `folder-${Date.now()}`;
+            
+            const folderId = 'folder_' + Date.now();
             folders[folderId] = {
-                name,
+                name: name,
                 pdfs: []
             };
-
+            
             localStorage.setItem('folders', JSON.stringify(folders));
             closeModal('folderModal');
             renderFolders();
         }
 
-        function openAddPDFModal(folderId) {
-            currentFolder = folderId;
-            openModal('addPDFModal');
+        function showAddPdfModal() {
+            const select = document.getElementById('folderSelect');
+            select.innerHTML = '';
+            
+            for (let id in folders) {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = folders[id].name;
+                select.appendChild(option);
+            }
+            
+            showModal('pdfModal');
         }
 
-        async function addPDFsToFolder() {
-            const files = document.getElementById('pdfFiles').files;
-
-            if (files.length === 0) {
-                alert('Por favor seleccione al menos un PDF');
+        async function addPdf() {
+            const folderId = document.getElementById('folderSelect').value;
+            const files = document.getElementById('pdfFile').files;
+            
+            if (!files.length) {
+                alert('Por favor seleccione al menos un archivo PDF');
                 return;
             }
 
@@ -408,18 +363,18 @@
                     reader.readAsDataURL(file);
                 });
 
-                folders[currentFolder].pdfs.push({
+                folders[folderId].pdfs.push({
                     name: file.name,
                     data: pdfData
                 });
             }
 
             localStorage.setItem('folders', JSON.stringify(folders));
-            closeModal('addPDFModal');
+            closeModal('pdfModal');
             renderFolders();
         }
 
-        function deletePDF(folderId, pdfIndex) {
+        function deletePdf(folderId, pdfIndex) {
             if (confirm('¿Está seguro de eliminar este PDF?')) {
                 folders[folderId].pdfs.splice(pdfIndex, 1);
                 localStorage.setItem('folders', JSON.stringify(folders));
@@ -429,10 +384,10 @@
 
         function deleteFolder(folderId) {
             if (folders[folderId].pdfs.length > 0) {
-                alert('No se puede eliminar una carpeta que contiene PDFs. Por favor, elimine primero todos los PDFs.');
+                alert('No se puede eliminar una carpeta que contiene PDFs');
                 return;
             }
-
+            
             if (confirm('¿Está seguro de eliminar esta carpeta?')) {
                 delete folders[folderId];
                 localStorage.setItem('folders', JSON.stringify(folders));
@@ -440,31 +395,59 @@
             }
         }
 
+        function viewPdf(data) {
+            document.getElementById('pdfViewer').src = data;
+        }
+
+        function searchPdfs() {
+            const searchText = document.getElementById('searchPdf').value.toLowerCase();
+            const pdfItems = document.querySelectorAll('.pdf-item');
+            
+            pdfItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchText) ? '' : 'none';
+            });
+        }
+
         function renderFolders() {
             const container = document.getElementById('folders-container');
             container.innerHTML = '';
 
-            Object.entries(folders).forEach(([id, folder]) => {
+            for (let id in folders) {
+                const folder = folders[id];
                 const folderDiv = document.createElement('div');
                 folderDiv.className = 'folder';
+                
                 folderDiv.innerHTML = `
-                    <div class="folder-header" onclick="toggleFolder('${id}')">
+                    <div class="folder-header">
                         <span>${folder.name}</span>
-                        ${isAdminMode ? `
-                            <div class="folder-actions">
-                                <button class="btn btn-primary" onclick="event.stopPropagation(); openAddPDFModal('${id}')">
-                                    Agregar PDFs
-                                </button>
-                                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteFolder('${id}')">
-                                    Eliminar
-                                </button>
-                            </div>
-                        ` : ''}
+                        ${isAdmin ? `<button class="btn btn-danger" onclick="deleteFolder('${id}')">Eliminar</button>` : ''}
                     </div>
-                    <div id="content-${id}" class="folder-content">
-                        ${folder.pdfs.map((pdf, pdfIndex) => `
+                    <div class="folder-content">
+                        ${folder.pdfs.map((pdf, index) => `
                             <div class="pdf-item">
-                                <span onclick="viewPDF('${id}', ${pdfIndex})">${pdf.name}</span>
-                                ${isAdminMode ? `
-                                    <div class="pdf-controls">
-                                        <button class="btn btn-danger" onclick
+                                <span onclick="viewPdf('${pdf.data}')">${pdf.name}</span>
+                                ${isAdmin ? `<button class="btn btn-danger" onclick="deletePdf('${id}', ${index})">Eliminar</button>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                container.appendChild(folderDiv);
+                
+                // Agregar evento para mostrar/ocultar contenido
+                const header = folderDiv.querySelector('.folder-header');
+                const content = folderDiv.querySelector('.folder-content');
+                header.addEventListener('click', () => {
+                    content.classList.toggle('active');
+                });
+            }
+        }
+
+        // Inicialización
+        window.onload = function() {
+            renderFolders();
+        };
+    </script>
+</body>
+</html>
