@@ -421,4 +421,134 @@
 
         async function fetchPDFs(folderId) {
             try {
-                const config = folderConfigs[folderId];
+                const config = folderConfigs[folderId]; 
+// Añade estas funciones al final del script existente:
+
+function toggleFolder(folderId, folderElement) {
+    const content = document.getElementById(folderId);
+    const allContents = document.querySelectorAll('.folder-content');
+    const allFolders = document.querySelectorAll('.folder');
+    
+    // Cerrar todas las carpetas
+    allContents.forEach(item => {
+        item.classList.remove('visible');
+    });
+    allFolders.forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Abrir la carpeta seleccionada
+    content.classList.add('visible');
+    folderElement.classList.add('active');
+    
+    // Cargar PDFs si no se han cargado
+    if (!content.querySelector('li')) {
+        fetchPDFs(folderId);
+    }
+}
+
+async function fetchPDFs(folderId) {
+    try {
+        const config = folderConfigs[folderId];
+        if (!config) return;
+        
+        const response = await fetch(config.script);
+        if (!response.ok) throw new Error("Error al obtener los archivos PDF");
+        const pdfs = await response.json();
+        
+        const folderList = document.getElementById(`${folderId}-list`);
+        folderList.innerHTML = '';
+        
+        pdfs.forEach(pdf => {
+            if (pdf.name.toLowerCase().includes(config.keyword)) {
+                let li = document.createElement("li");
+                let link = document.createElement("a");
+                link.href = pdf.url;
+                link.textContent = pdf.name;
+                link.target = "_blank";
+                li.appendChild(link);
+                folderList.appendChild(li);
+            }
+        });
+    } catch (error) {
+        document.getElementById("error-message").textContent = 
+            `No se pudieron cargar los PDFs para ${folderId}. ${error.message}`;
+        console.error("Error cargando los PDFs:", error);
+    }
+}
+
+function filterStudies() {
+    let queries = [1,2,3]
+        .map(i => document.getElementById(`search-input-${i}`).value.toLowerCase())
+        .filter(q => q !== "");
+    
+    const allItems = document.querySelectorAll(".study-list li");
+    let pdfFound = false;
+    
+    allItems.forEach(item => {
+        const pdfTitle = item.textContent.toLowerCase();
+        if (queries.every(query => pdfTitle.includes(query))) {
+            item.style.display = "block";
+            pdfFound = true;
+            const parentFolder = item.closest('.folder-content');
+            if (parentFolder) {
+                parentFolder.classList.add('visible');
+                const folderButton = parentFolder.previousElementSibling;
+                if (folderButton) {
+                    folderButton.classList.add('active');
+                }
+            }
+        } else {
+            item.style.display = "none";
+        }
+    });
+
+    document.getElementById("error-message").textContent = 
+        pdfFound ? "" : "No se encontraron PDFs que coincidan con la búsqueda.";
+}
+
+// Verificar y restaurar el modo administrador al cargar la página
+function checkAdminStatus() {
+    const adminStatus = localStorage.getItem('adminMode');
+    if (adminStatus === 'true') {
+        isAdminMode = true;
+        document.body.classList.add('admin-mode');
+        document.querySelector('.admin-controls').classList.add('visible');
+        document.getElementById('admin-status').style.display = 'block';
+        document.getElementById('admin-status').textContent = '✅ Modo administrador activo';
+        document.getElementById('admin-login').style.display = 'none';
+    }
+}
+
+// Añadir al inicio
+window.addEventListener('load', () => {
+    renderFolders();
+    checkAdminStatus();
+});
+
+// Modificar la función verifyAdminPassword para persistir el estado
+function verifyAdminPassword() {
+    const password = document.getElementById('admin-password').value;
+    if (password === ADMIN_PASSWORD) {
+        isAdminMode = true;
+        localStorage.setItem('adminMode', 'true');
+        document.body.classList.add('admin-mode');
+        document.querySelector('.admin-controls').classList.add('visible');
+        document.getElementById('admin-status').style.display = 'block';
+        document.getElementById('admin-status').textContent = '✅ Modo administrador activo';
+        document.getElementById('admin-login').style.display = 'none';
+        hideAdminModal();
+    } else {
+        alert('Contraseña incorrecta');
+    }
+}
+
+// Añadir función para cerrar sesión de administrador
+function logoutAdmin() {
+    isAdminMode = false;
+    localStorage.removeItem('adminMode');
+    document.body.classList.remove('admin-mode');
+    document.querySelector('.admin-controls').classList.remove('visible');
+    document.getElementById('admin-status').style.display = 'none';
+    document.getElementById('admin-login').style.display = 'block';
+} 
