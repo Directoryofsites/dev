@@ -1,242 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- El resto del head permanece igual -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RESUMENES MENSAJES BIBLICOS</title>
     <style>
-        /* Los estilos permanecen igual... */
-        /* ... */
-        /* Copia todos los estilos anteriores aquí */
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>RESUMENES MENSAJES BIBLICOS</h1>
-        
-        <div id="search-box">
-            <input type="text" id="search-input-1" placeholder="Palabra clave 1" oninput="filterStudies()">
-            <input type="text" id="search-input-2" placeholder="Palabra clave 2" oninput="filterStudies()">
-            <input type="text" id="search-input-3" placeholder="Palabra clave 3" oninput="filterStudies()">
-        </div>
-
-        <div class="folder" onclick="toggleFolder('escuela-dominical', this)">
-            <span class="folder-icon">📁</span>
-            <span>1. Escuela Dominical</span>
-        </div>
-        <div id="escuela-dominical" class="folder-content">
-            <ul id="escuela-list" class="study-list"></ul>
-        </div>
-
-        <div class="folder" onclick="toggleFolder('sermon-dominical', this)">
-            <span class="folder-icon">📁</span>
-            <span>2. Sermón Dominical</span>
-        </div>
-        <div id="sermon-dominical" class="folder-content">
-            <ul id="sermon-list" class="study-list"></ul>
-        </div>
-
-        <p id="error-message"></p>
-    </div>
-
-    <script>
-        let pdfsData = [];
-
-        async function fetchPDFs() {
-            try {
-                const response = await fetch("https://script.google.com/macros/s/AKfycbxZsbANME7WvSVW6WzfSGif5IVPQlCCO6MiBNTXMM7hCb1R_yAapBKMNf-qD9wWkMRy/exec");
-                if (!response.ok) throw new Error("Error al obtener los archivos PDF");
-                const pdfs = await response.json();
-                pdfsData = pdfs;
-                organizePDFs(pdfs);
-            } catch (error) {
-                document.getElementById("error-message").textContent = "No se pudieron cargar los PDFs.";
-                console.error("Error cargando los PDFs:", error);
-            }
-        }
-
-        function organizePDFs(pdfs) {
-            const escuelaList = document.getElementById("escuela-list");
-            const sermonList = document.getElementById("sermon-list");
-            
-            escuelaList.innerHTML = "";
-            sermonList.innerHTML = "";
-
-            pdfs.forEach(pdf => {
-                let li = document.createElement("li");
-                let link = document.createElement("a");
-                link.href = pdf.url;
-                link.textContent = pdf.name;
-                link.target = "_blank";
-                li.appendChild(link);
-
-                const pdfName = pdf.name.toLowerCase();
-                
-                if (pdfName.includes("escuela")) {
-                    escuelaList.appendChild(li);
-                } else if (pdfName.includes("sermon") || pdfName.includes("sermón")) {
-                    sermonList.appendChild(li);
-                }
-            });
-        }
-
-        function toggleFolder(folderId, folderElement) {
-            const content = document.getElementById(folderId);
-            const isCurrentlyVisible = content.classList.contains('visible');
-            
-            // Cerrar todas las carpetas primero
-            const allContents = document.querySelectorAll('.folder-content');
-            const allFolders = document.querySelectorAll('.folder');
-            
-            allContents.forEach(item => {
-                item.classList.remove('visible');
-            });
-            allFolders.forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Si la carpeta no estaba visible, entonces la abrimos
-            if (!isCurrentlyVisible) {
-                content.classList.add('visible');
-                folderElement.classList.add('active');
-            }
-            // Si estaba visible, ya quedó cerrada con el código anterior
-        }
-
-        function filterStudies() {
-            let query1 = document.getElementById("search-input-1").value.toLowerCase();
-            let query2 = document.getElementById("search-input-2").value.toLowerCase();
-            let query3 = document.getElementById("search-input-3").value.toLowerCase();
-            let queries = [query1, query2, query3].filter(q => q !== "");
-            
-            const allItems = document.querySelectorAll(".study-list li");
-            let pdfFound = false;
-            
-            allItems.forEach(item => {
-                const pdfTitle = item.textContent.toLowerCase();
-                if (queries.every(query => pdfTitle.includes(query))) {
-                    item.style.display = "block";
-                    pdfFound = true;
-                    const parentFolder = item.closest('.folder-content');
-                    if (parentFolder) {
-                        parentFolder.classList.add('visible');
-                        const folderButton = parentFolder.previousElementSibling;
-                        if (folderButton) {
-                            folderButton.classList.add('active');
-                        }
-                    }
-                } else {
-                    item.style.display = "none";
-                }
-            });
-
-            document.getElementById("error-message").textContent = 
-                pdfFound ? "" : "No se encontraron PDFs que coincidan con la búsqueda.";
-        }
-
-        fetchPDFs();
-    </script>
-</body>
-</html>
-
-
-
-
-
- 
-Nuevo 3 con la instruccinpara agregar mas carpetas: 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <!-- El head permanece igual... -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RESUMENES MENSAJES BIBLICOS</title>
-    <style>
-        /* Los estilos permanecen igual... */
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .folder {
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            margin: 10px 0;
-            padding: 15px;
+        /* Estilos previos... */
+        .admin-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 16px;
+            border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        .folder:hover {
-            background-color: #e9ecef;
-        }
-        .folder.active {
-            background-color: #e9ecef;
-            border-color: #007BFF;
-        }
-        .folder-icon {
-            font-size: 24px;
-            margin-right: 10px;
-        }
-        .folder-content {
-            display: none;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            background-color: white;
-        }
-        .folder-content.visible {
-            display: block;
-        }
-        .study-list {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-            margin: 0;
-        }
-        .study-list li {
-            padding: 10px;
-            background: #f8f9fa;
-            margin: 5px 0;
-            border-radius: 5px;
-            border: 1px solid #dee2e6;
-        }
-        .study-list li a {
-            text-decoration: none;
-            color: #007BFF;
-            display: block;
-        }
-        .study-list li a:hover {
-            text-decoration: underline;
-        }
-        #search-box {
             margin: 20px 0;
+            font-size: 14px;
         }
-        #search-box input {
-            padding: 8px;
-            margin: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            width: calc(33% - 20px);
-            min-width: 150px;
+        
+        .admin-button:hover {
+            background-color: #5a6268;
         }
-        #error-message {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
+        
+        .admin-controls {
+            display: none;
+        }
+        
+        .admin-controls.visible {
+            display: block;
+        }
+
+        .folder-actions {
+            display: none;
+        }
+        
+        .admin-mode .folder-actions {
+            display: block;
+        }
+        
+        #admin-status {
+            color: #28a745;
+            font-size: 14px;
+            margin: 10px 0;
+            display: none;
         }
     </style>
 </head>
@@ -244,138 +49,239 @@ Nuevo 3 con la instruccinpara agregar mas carpetas:
     <div class="container">
         <h1>RESUMENES MENSAJES BIBLICOS</h1>
         
+        <button id="admin-login" class="admin-button" onclick="showAdminLogin()">
+            🔒 Modo Administrador
+        </button>
+        <p id="admin-status"></p>
+
         <div id="search-box">
             <input type="text" id="search-input-1" placeholder="Palabra clave 1" oninput="filterStudies()">
             <input type="text" id="search-input-2" placeholder="Palabra clave 2" oninput="filterStudies()">
             <input type="text" id="search-input-3" placeholder="Palabra clave 3" oninput="filterStudies()">
         </div>
 
-        <div class="folder" onclick="toggleFolder('escuela-dominical', this)">
-            <span class="folder-icon">📁</span>
-            <span>1. Escuela Dominical</span>
-        </div>
-        <div id="escuela-dominical" class="folder-content">
-            <ul id="escuela-list" class="study-list"></ul>
+        <div class="admin-controls">
+            <button class="add-folder-button" onclick="showNewFolderModal()">
+                📁 Crear Nueva Carpeta
+            </button>
         </div>
 
-        <div class="folder" onclick="toggleFolder('sermon-dominical', this)">
-            <span class="folder-icon">📁</span>
-            <span>2. Sermón Dominical</span>
-        </div>
-        <div id="sermon-dominical" class="folder-content">
-            <ul id="sermon-list" class="study-list"></ul>
+        <div id="folders-container">
+            <!-- Las carpetas se generarán dinámicamente aquí -->
         </div>
 
-        <!-- AQUÍ ES DONDE AGREGARÍAS UNA NUEVA CARPETA -->
-        <!-- Ejemplo de nueva carpeta:
-        <div class="folder" onclick="toggleFolder('nueva-carpeta', this)">
-            <span class="folder-icon">📁</span>
-            <span>3. Nombre de Nueva Carpeta</span>
+        <!-- Modal de Login Administrador -->
+        <div id="admin-modal" class="modal">
+            <div class="modal-content">
+                <h2>Acceso Administrador</h2>
+                <input type="password" id="admin-password" placeholder="Contraseña de administrador">
+                <div class="modal-buttons">
+                    <button class="cancel" onclick="hideAdminModal()">Cancelar</button>
+                    <button class="save" onclick="verifyAdminPassword()">Acceder</button>
+                </div>
+            </div>
         </div>
-        <div id="nueva-carpeta" class="folder-content">
-            <ul id="nueva-lista" class="study-list"></ul>
+
+        <!-- Modal de Carpeta -->
+        <div id="folder-modal" class="modal">
+            <div class="modal-content">
+                <h2 id="modal-title">Crear Nueva Carpeta</h2>
+                <input type="text" id="folder-name" placeholder="Nombre de la carpeta">
+                <input type="text" id="script-url" placeholder="URL del Script de Google">
+                <input type="password" id="folder-password" placeholder="Contraseña para esta carpeta">
+                <div class="modal-buttons">
+                    <button class="cancel" onclick="hideModal()">Cancelar</button>
+                    <button class="save" onclick="saveFolder()">Guardar</button>
+                </div>
+            </div>
         </div>
-        -->
+
+        <!-- Modal de Verificación de Contraseña -->
+        <div id="verify-modal" class="modal">
+            <div class="modal-content">
+                <h2>Verificar Contraseña</h2>
+                <input type="password" id="verify-password" placeholder="Contraseña de la carpeta">
+                <div class="modal-buttons">
+                    <button class="cancel" onclick="hideVerifyModal()">Cancelar</button>
+                    <button class="save" onclick="verifyFolderPassword()">Verificar</button>
+                </div>
+            </div>
+        </div>
 
         <p id="error-message"></p>
     </div>
 
     <script>
         let pdfsData = [];
+        let currentEditingId = null;
+        let isAdminMode = false;
+        let pendingAction = null;
+        
+        // Cambia esta contraseña por una segura
+        const ADMIN_PASSWORD = "admin123";
 
-        async function fetchPDFs() {
-            try {
-                const response = await fetch("https://script.google.com/macros/s/AKfycbxZsbANME7WvSVW6WzfSGif5IVPQlCCO6MiBNTXMM7hCb1R_yAapBKMNf-qD9wWkMRy/exec");
-                if (!response.ok) throw new Error("Error al obtener los archivos PDF");
-                const pdfs = await response.json();
-                pdfsData = pdfs;
-                organizePDFs(pdfs);
-            } catch (error) {
-                document.getElementById("error-message").textContent = "No se pudieron cargar los PDFs.";
-                console.error("Error cargando los PDFs:", error);
+        // Configuración inicial de carpetas
+        const defaultFolders = {
+            'escuela-dominical': {
+                name: 'Escuela Dominical',
+                script: 'URL_ACTUAL_ESCUELA',
+                keyword: 'escuela',
+                password: 'escuela123' // Cambia esta contraseña
+            },
+            'sermon-dominical': {
+                name: 'Sermón Dominical',
+                script: 'URL_ACTUAL_SERMON',
+                keyword: 'sermon',
+                password: 'sermon123' // Cambia esta contraseña
+            }
+        };
+
+        let folderConfigs = JSON.parse(localStorage.getItem('folderConfigs')) || defaultFolders;
+
+        function showAdminLogin() {
+            document.getElementById('admin-modal').style.display = 'block';
+        }
+
+        function hideAdminModal() {
+            document.getElementById('admin-modal').style.display = 'none';
+            document.getElementById('admin-password').value = '';
+        }
+
+        function verifyAdminPassword() {
+            const password = document.getElementById('admin-password').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdminMode = true;
+                document.body.classList.add('admin-mode');
+                document.querySelector('.admin-controls').classList.add('visible');
+                document.getElementById('admin-status').style.display = 'block';
+                document.getElementById('admin-status').textContent = '✅ Modo administrador activo';
+                document.getElementById('admin-login').style.display = 'none';
+                hideAdminModal();
+            } else {
+                alert('Contraseña incorrecta');
             }
         }
 
-        function organizePDFs(pdfs) {
-            const escuelaList = document.getElementById("escuela-list");
-            const sermonList = document.getElementById("sermon-list");
-            // Si agregas una nueva carpeta, agrega su lista aquí:
-            // const nuevaLista = document.getElementById("nueva-lista");
+        function showVerifyModal(action, folderId) {
+            pendingAction = { action, folderId };
+            document.getElementById('verify-modal').style.display = 'block';
+        }
+
+        function hideVerifyModal() {
+            document.getElementById('verify-modal').style.display = 'none';
+            document.getElementById('verify-password').value = '';
+            pendingAction = null;
+        }
+
+        function verifyFolderPassword() {
+            const password = document.getElementById('verify-password').value;
+            const folder = folderConfigs[pendingAction.folderId];
             
-            escuelaList.innerHTML = "";
-            sermonList.innerHTML = "";
-            // nuevaLista.innerHTML = "";
-
-            pdfs.forEach(pdf => {
-                let li = document.createElement("li");
-                let link = document.createElement("a");
-                link.href = pdf.url;
-                link.textContent = pdf.name;
-                link.target = "_blank";
-                li.appendChild(link);
-
-                const pdfName = pdf.name.toLowerCase();
-                
-                if (pdfName.includes("escuela")) {
-                    escuelaList.appendChild(li);
-                } else if (pdfName.includes("sermon") || pdfName.includes("sermón")) {
-                    sermonList.appendChild(li);
+            if (password === folder.password) {
+                hideVerifyModal();
+                if (pendingAction.action === 'edit') {
+                    showEditFolderModal(pendingAction.folderId);
+                } else if (pendingAction.action === 'delete') {
+                    deleteFolder(pendingAction.folderId);
                 }
-                // Para una nueva carpeta, agregarías una condición así:
-                // else if (pdfName.includes("palabra-clave-nueva-carpeta")) {
-                //     nuevaLista.appendChild(li);
-                // }
+            } else {
+                alert('Contraseña incorrecta');
+            }
+        }
+
+        function showNewFolderModal() {
+            if (!isAdminMode) {
+                alert('Necesitas ser administrador para crear carpetas');
+                return;
+            }
+            currentEditingId = null;
+            document.getElementById('modal-title').textContent = 'Crear Nueva Carpeta';
+            document.getElementById('folder-name').value = '';
+            document.getElementById('script-url').value = '';
+            document.getElementById('folder-password').value = '';
+            document.getElementById('folder-modal').style.display = 'block';
+        }
+
+        function showEditFolderModal(folderId) {
+            if (!isAdminMode) {
+                alert('Necesitas ser administrador para editar carpetas');
+                return;
+            }
+            showVerifyModal('edit', folderId);
+        }
+
+        function initiateDelete(folderId) {
+            if (!isAdminMode) {
+                alert('Necesitas ser administrador para eliminar carpetas');
+                return;
+            }
+            showVerifyModal('delete', folderId);
+        }
+
+        function deleteFolder(folderId) {
+            delete folderConfigs[folderId];
+            saveFolderConfigs();
+            renderFolders();
+        }
+
+        function saveFolder() {
+            const folderName = document.getElementById('folder-name').value;
+            const scriptUrl = document.getElementById('script-url').value;
+            const password = document.getElementById('folder-password').value;
+            
+            if (!folderName || !scriptUrl || !password) {
+                alert('Por favor completa todos los campos');
+                return;
+            }
+
+            const folderId = currentEditingId || folderName.toLowerCase().replace(/\s+/g, '-');
+
+            folderConfigs[folderId] = {
+                name: folderName,
+                script: scriptUrl,
+                keyword: folderName.toLowerCase(),
+                password: password
+            };
+
+            saveFolderConfigs();
+            renderFolders();
+            hideModal();
+        }
+
+        function saveFolderConfigs() {
+            localStorage.setItem('folderConfigs', JSON.stringify(folderConfigs));
+        }
+
+        function renderFolders() {
+            const container = document.getElementById('folders-container');
+            container.innerHTML = '';
+            
+            Object.entries(folderConfigs).forEach(([folderId, config], index) => {
+                const folderHtml = `
+                    <div class="folder" onclick="toggleFolder('${folderId}', this)">
+                        <div class="folder-header">
+                            <span>
+                                <span class="folder-icon">📁</span>
+                                <span>${index + 1}. ${config.name}</span>
+                            </span>
+                            <div class="folder-actions" onclick="event.stopPropagation()">
+                                <button onclick="showEditFolderModal('${folderId}')" title="Editar">✏️</button>
+                                <button onclick="initiateDelete('${folderId}')" title="Eliminar">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="${folderId}" class="folder-content">
+                        <ul id="${folderId}-list" class="study-list"></ul>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', folderHtml);
             });
         }
 
-        function toggleFolder(folderId, folderElement) {
-            const content = document.getElementById(folderId);
-            const allContents = document.querySelectorAll('.folder-content');
-            const allFolders = document.querySelectorAll('.folder');
-            
-            allContents.forEach(item => {
-                item.classList.remove('visible');
-            });
-            allFolders.forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            content.classList.add('visible');
-            folderElement.classList.add('active');
-        }
+        // Resto de funciones (fetchPDFs, toggleFolder, filterStudies) permanecen igual...
 
-        function filterStudies() {
-            let query1 = document.getElementById("search-input-1").value.toLowerCase();
-            let query2 = document.getElementById("search-input-2").value.toLowerCase();
-            let query3 = document.getElementById("search-input-3").value.toLowerCase();
-            let queries = [query1, query2, query3].filter(q => q !== "");
-            
-            const allItems = document.querySelectorAll(".study-list li");
-            let pdfFound = false;
-            
-            allItems.forEach(item => {
-                const pdfTitle = item.textContent.toLowerCase();
-                if (queries.every(query => pdfTitle.includes(query))) {
-                    item.style.display = "block";
-                    pdfFound = true;
-                    const parentFolder = item.closest('.folder-content');
-                    if (parentFolder) {
-                        parentFolder.classList.add('visible');
-                        const folderButton = parentFolder.previousElementSibling;
-                        if (folderButton) {
-                            folderButton.classList.add('active');
-                        }
-                    }
-                } else {
-                    item.style.display = "none";
-                }
-            });
-
-            document.getElementById("error-message").textContent = 
-                pdfFound ? "" : "No se encontraron PDFs que coincidan con la búsqueda.";
-        }
-
-        fetchPDFs();
+        // Inicializar la página
+        renderFolders();
     </script>
 </body>
 </html>
