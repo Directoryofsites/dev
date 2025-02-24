@@ -617,9 +617,7 @@
     </div>
 
     <script>
-        // ==========================================
         // CONFIGURACIÓN DE FIREBASE CON TUS CREDENCIALES
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAAMEnTXBufZ6LJW7eTVjijjxyoFcuftss",
             authDomain: "mensajes-7a793.firebaseapp.com",
@@ -640,13 +638,93 @@
         let isAdminMode = false;
         let currentFolderId = null;
 
-        // Event Listeners
+        // Event Listeners para los botones principales
         document.getElementById('adminLoginBtn').addEventListener('click', () => openModal('adminModal'));
         document.getElementById('logoutBtn').addEventListener('click', logoutAdmin);
         document.getElementById('addFolderBtn').addEventListener('click', () => openModal('folderModal'));
         document.getElementById('siteSettingsBtn').addEventListener('click', () => openModal('siteSettingsModal'));
 
-        // Funciones de inicialización
+        // Funciones de utilidad para mensajes y modales
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successElement = document.getElementById('success-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            // Limpiar campos del formulario
+            const modal = document.getElementById(modalId);
+            modal.querySelectorAll('input, textarea').forEach(input => {
+                if (input.type !== 'button' && input.type !== 'submit') {
+                    input.value = '';
+                }
+            });
+        }
+
+        // Funciones de autenticación y admin
+        function verifyAdminPassword() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === ADMIN_PASSWORD) {
+                isAdminMode = true;
+                document.body.classList.add('admin-mode');
+                document.getElementById('addFolderBtn').style.display = 'inline-block';
+                document.getElementById('siteSettingsBtn').style.display = 'inline-block';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                document.getElementById('adminLoginBtn').style.display = 'none';
+                closeModal('adminModal');
+                localStorage.setItem('adminMode', 'true');
+                showSuccess('Modo administrador activado');
+            } else {
+                showError('Contraseña incorrecta');
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminMode = false;
+            document.body.classList.remove('admin-mode');
+            document.getElementById('addFolderBtn').style.display = 'none';
+            document.getElementById('siteSettingsBtn').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('adminLoginBtn').style.display = 'inline-block';
+            localStorage.removeItem('adminMode');
+            showSuccess('Sesión cerrada');
+        }
+
+        // Función para mostrar todas las carpetas (cerrar carpeta abierta)
+        function showFolders() {
+            document.getElementById('pdfViewer').src = '';
+            const contents = document.querySelectorAll('.folder-content');
+            contents.forEach(content => content.classList.remove('active'));
+        }
+
+        // Funciones para gestionar carpetas y PDFs
+        
+        // Inicialización
         async function init() {
             showLoading();
             try {
@@ -668,81 +746,5 @@
                 }
             } catch (error) {
                 showError('Error al inicializar la aplicación: ' + error.message);
+                console.error(error);
             } finally {
-                hideLoading();
-            }
-        }
-
-        // Carga la configuración del sitio desde Firestore
-        async function loadSiteSettings() {
-            try {
-                const docRef = db.collection('configuracion').doc('sitio');
-                const doc = await docRef.get();
-                
-                if (doc.exists) {
-                    const data = doc.data();
-                    
-                    // Actualizar nombre de la iglesia
-                    if (data.nombre) {
-                        document.getElementById('church-name').textContent = data.nombre;
-                        document.title = data.nombre;
-                    }
-                    
-                    // Actualizar logo si existe
-                    if (data.logoUrl) {
-                        document.getElementById('church-logo').src = data.logoUrl;
-                    }
-                } else {
-                    // Si no existe el documento, crearlo con valores predeterminados
-                    await db.collection('configuracion').doc('sitio').set({
-                        nombre: 'RESUMENES MENSAJES BIBLICOS',
-                        logoUrl: document.getElementById('church-logo').src
-                    });
-                }
-            } catch (error) {
-                console.error('Error al cargar la configuración:', error);
-            }
-        }
-
-        // Guarda la configuración del sitio
-        async function saveSiteSettings() {
-            showLoading();
-            
-            try {
-                const nombre = document.getElementById('churchName').value.trim();
-                const logoFile = document.getElementById('churchLogo').files[0];
-                
-                if (!nombre) {
-                    throw new Error('El nombre no puede estar vacío');
-                }
-                
-                let logoUrl = document.getElementById('church-logo').src;
-                
-                // Si hay un nuevo logo, subirlo a Firebase Storage
-                if (logoFile) {
-                    const storageRef = storage.ref(`configuracion/logo-${Date.now()}`);
-                    await storageRef.put(logoFile);
-                    logoUrl = await storageRef.getDownloadURL();
-                }
-                
-                // Guardar en Firestore
-                await db.collection('configuracion').doc('sitio').set({
-                    nombre: nombre,
-                    logoUrl: logoUrl
-                });
-                
-                // Actualizar UI
-                document.getElementById('church-name').textContent = nombre;
-                document.getElementById('church-logo').src = logoUrl;
-                document.title = nombre;
-                
-                showSuccess('Configuración guardada correctamente');
-                closeModal('siteSettingsModal');
-            } catch (error) {
-                showError('Error al guardar la configuración: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Carga todas las carpetas desde
