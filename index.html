@@ -71,6 +71,14 @@
             font-weight: bold;
             margin-top: 10px;
         }
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            text-align: left;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -100,6 +108,9 @@
         </div>
 
         <p id="error-message"></p>
+        
+        <!-- Área de depuración -->
+        <div id="debug-info" class="debug-info"></div>
     </div>
 
     <script>
@@ -109,11 +120,24 @@
                 if (!response.ok) throw new Error("Error al obtener los archivos PDF");
                 const pdfs = await response.json();
                 
+                // Mostrar información de depuración
+                console.log("PDFs recibidos:", pdfs);
+                showDebugInfo(pdfs);
+                
                 organizePDFs(pdfs);
             } catch (error) {
                 document.getElementById("error-message").textContent = "No se pudieron cargar los PDFs.";
                 console.error("Error cargando los PDFs:", error);
             }
+        }
+
+        function showDebugInfo(pdfs) {
+            const debugInfo = document.getElementById("debug-info");
+            debugInfo.style.display = "block";
+            debugInfo.innerHTML = "<h3>Información de PDFs cargados:</h3>";
+            pdfs.forEach(pdf => {
+                debugInfo.innerHTML += `<p>Nombre: ${pdf.name}</p>`;
+            });
         }
 
         function organizePDFs(pdfs) {
@@ -123,6 +147,9 @@
             escuelaList.innerHTML = "";
             sermonList.innerHTML = "";
 
+            let escuelaCount = 0;
+            let sermonCount = 0;
+
             pdfs.forEach(pdf => {
                 let li = document.createElement("li");
                 let link = document.createElement("a");
@@ -131,13 +158,30 @@
                 link.target = "_blank";
                 li.appendChild(link);
 
-                // Determinar a qué carpeta pertenece el PDF
-                if (pdf.name.toLowerCase().includes("escuela")) {
+                // Mejorar la detección de la categoría
+                const pdfName = pdf.name.toLowerCase();
+                if (pdfName.includes("escuela")) {
                     escuelaList.appendChild(li);
-                } else if (pdf.name.toLowerCase().includes("sermon")) {
+                    escuelaCount++;
+                } else if (pdfName.includes("sermon") || pdfName.includes("sermón")) {
                     sermonList.appendChild(li);
+                    sermonCount++;
+                } else {
+                    // Para PDFs que no coinciden con ninguna categoría
+                    console.log("PDF sin categoría clara:", pdf.name);
                 }
             });
+
+            // Mostrar mensaje si no hay PDFs en alguna carpeta
+            if (escuelaCount === 0) {
+                escuelaList.innerHTML = "<li style='background-color: #ffe6e6;'>No se encontraron documentos en esta carpeta</li>";
+            }
+            if (sermonCount === 0) {
+                sermonList.innerHTML = "<li style='background-color: #ffe6e6;'>No se encontraron documentos en esta carpeta</li>";
+            }
+
+            // Mostrar contadores
+            console.log(`PDFs encontrados - Escuela: ${escuelaCount}, Sermón: ${sermonCount}`);
         }
 
         function toggleFolder(folderId) {
@@ -178,5 +222,4 @@
         fetchPDFs();
     </script>
 </body>
-</html> 
-
+</html>
