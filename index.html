@@ -1,6 +1,154 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- El resto del head permanece igual -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RESUMENES MENSAJES BIBLICOS</title>
+    <style>
+        /* Los estilos permanecen igual... */
+        /* ... */
+        /* Copia todos los estilos anteriores aquí */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RESUMENES MENSAJES BIBLICOS</h1>
+        
+        <div id="search-box">
+            <input type="text" id="search-input-1" placeholder="Palabra clave 1" oninput="filterStudies()">
+            <input type="text" id="search-input-2" placeholder="Palabra clave 2" oninput="filterStudies()">
+            <input type="text" id="search-input-3" placeholder="Palabra clave 3" oninput="filterStudies()">
+        </div>
+
+        <div class="folder" onclick="toggleFolder('escuela-dominical', this)">
+            <span class="folder-icon">📁</span>
+            <span>1. Escuela Dominical</span>
+        </div>
+        <div id="escuela-dominical" class="folder-content">
+            <ul id="escuela-list" class="study-list"></ul>
+        </div>
+
+        <div class="folder" onclick="toggleFolder('sermon-dominical', this)">
+            <span class="folder-icon">📁</span>
+            <span>2. Sermón Dominical</span>
+        </div>
+        <div id="sermon-dominical" class="folder-content">
+            <ul id="sermon-list" class="study-list"></ul>
+        </div>
+
+        <p id="error-message"></p>
+    </div>
+
+    <script>
+        let pdfsData = [];
+
+        async function fetchPDFs() {
+            try {
+                const response = await fetch("https://script.google.com/macros/s/AKfycbxZsbANME7WvSVW6WzfSGif5IVPQlCCO6MiBNTXMM7hCb1R_yAapBKMNf-qD9wWkMRy/exec");
+                if (!response.ok) throw new Error("Error al obtener los archivos PDF");
+                const pdfs = await response.json();
+                pdfsData = pdfs;
+                organizePDFs(pdfs);
+            } catch (error) {
+                document.getElementById("error-message").textContent = "No se pudieron cargar los PDFs.";
+                console.error("Error cargando los PDFs:", error);
+            }
+        }
+
+        function organizePDFs(pdfs) {
+            const escuelaList = document.getElementById("escuela-list");
+            const sermonList = document.getElementById("sermon-list");
+            
+            escuelaList.innerHTML = "";
+            sermonList.innerHTML = "";
+
+            pdfs.forEach(pdf => {
+                let li = document.createElement("li");
+                let link = document.createElement("a");
+                link.href = pdf.url;
+                link.textContent = pdf.name;
+                link.target = "_blank";
+                li.appendChild(link);
+
+                const pdfName = pdf.name.toLowerCase();
+                
+                if (pdfName.includes("escuela")) {
+                    escuelaList.appendChild(li);
+                } else if (pdfName.includes("sermon") || pdfName.includes("sermón")) {
+                    sermonList.appendChild(li);
+                }
+            });
+        }
+
+        function toggleFolder(folderId, folderElement) {
+            const content = document.getElementById(folderId);
+            const isCurrentlyVisible = content.classList.contains('visible');
+            
+            // Cerrar todas las carpetas primero
+            const allContents = document.querySelectorAll('.folder-content');
+            const allFolders = document.querySelectorAll('.folder');
+            
+            allContents.forEach(item => {
+                item.classList.remove('visible');
+            });
+            allFolders.forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Si la carpeta no estaba visible, entonces la abrimos
+            if (!isCurrentlyVisible) {
+                content.classList.add('visible');
+                folderElement.classList.add('active');
+            }
+            // Si estaba visible, ya quedó cerrada con el código anterior
+        }
+
+        function filterStudies() {
+            let query1 = document.getElementById("search-input-1").value.toLowerCase();
+            let query2 = document.getElementById("search-input-2").value.toLowerCase();
+            let query3 = document.getElementById("search-input-3").value.toLowerCase();
+            let queries = [query1, query2, query3].filter(q => q !== "");
+            
+            const allItems = document.querySelectorAll(".study-list li");
+            let pdfFound = false;
+            
+            allItems.forEach(item => {
+                const pdfTitle = item.textContent.toLowerCase();
+                if (queries.every(query => pdfTitle.includes(query))) {
+                    item.style.display = "block";
+                    pdfFound = true;
+                    const parentFolder = item.closest('.folder-content');
+                    if (parentFolder) {
+                        parentFolder.classList.add('visible');
+                        const folderButton = parentFolder.previousElementSibling;
+                        if (folderButton) {
+                            folderButton.classList.add('active');
+                        }
+                    }
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            document.getElementById("error-message").textContent = 
+                pdfFound ? "" : "No se encontraron PDFs que coincidan con la búsqueda.";
+        }
+
+        fetchPDFs();
+    </script>
+</body>
+</html>
+
+
+
+
+
+ 
+Nuevo 3 con la instruccinpara agregar mas carpetas: 
+<!DOCTYPE html>
+<html lang="es">
+<head>
     <!-- El head permanece igual... -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
