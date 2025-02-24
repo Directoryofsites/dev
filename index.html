@@ -3,28 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Carpetas</title>
+    <title>Sistema de PDFs</title>
+    <!-- PDF.js para visualizar PDFs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --background-color: #f5f7fa;
+            --border-color: #dce4ec;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background-color);
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
-            background: white;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        h1 {
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1rem;
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
         }
 
         .search-container {
@@ -36,21 +77,51 @@
 
         .search-container input {
             padding: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
             width: 200px;
         }
 
+        .content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 200px);
+        }
+
+        .folders-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .viewer-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #pdfViewer {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+
         .folder {
-            border: 1px solid #ddd;
-            margin: 10px 0;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            overflow: hidden;
         }
 
         .folder-header {
+            padding: 10px;
             background: #f8f9fa;
-            padding: 15px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -59,59 +130,23 @@
 
         .folder-content {
             display: none;
-            padding: 15px;
-            background: white;
+            padding: 10px;
         }
 
         .folder-content.active {
             display: block;
         }
 
-        .pdf-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .pdf-list li {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .pdf-list li:last-child {
-            border-bottom: none;
-        }
-
-        .pdf-list a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .pdf-list a:hover {
-            text-decoration: underline;
-        }
-
-        .admin-controls {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
+        .pdf-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: 10px;
         }
 
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
+        .pdf-item:hover {
+            background: #e9ecef;
         }
 
         .modal {
@@ -122,8 +157,8 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
         .modal.active {
@@ -150,8 +185,14 @@
         .form-group input {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
+        }
+
+        #error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin: 10px 0;
         }
 
         .folder-actions {
@@ -159,24 +200,36 @@
         }
 
         .admin-mode .folder-actions {
-            display: block;
+            display: flex;
+            gap: 5px;
         }
 
-        #error-message {
-            color: red;
-            text-align: center;
-            margin: 10px 0;
+        .breadcrumb {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb a {
+            color: var(--secondary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>RESUMENES MENSAJES BIBLICOS</h1>
-        
-        <div class="admin-controls">
-            <button id="adminLoginBtn" class="btn btn-primary">Modo Administrador</button>
-            <button id="logoutBtn" class="btn btn-danger" style="display: none;">Cerrar Sesión</button>
-            <button id="addFolderBtn" class="btn btn-primary" style="display: none;">Agregar Carpeta</button>
+        <div class="header">
+            <h1>RESUMENES MENSAJES BIBLICOS</h1>
+            <div class="admin-controls">
+                <button id="adminLoginBtn" class="btn btn-primary">Modo Administrador</button>
+                <button id="logoutBtn" class="btn btn-danger" style="display: none;">Cerrar Sesión</button>
+                <button id="addFolderBtn" class="btn btn-primary" style="display: none;">Nueva Carpeta</button>
+            </div>
         </div>
 
         <div class="search-container">
@@ -185,9 +238,17 @@
             <input type="text" id="search3" placeholder="Palabra clave 3" onkeyup="searchPDFs()">
         </div>
 
-        <div id="folders-container"></div>
-
-        <p id="error-message"></p>
+        <div class="content">
+            <div class="folders-panel">
+                <div class="breadcrumb">
+                    <a href="#" onclick="showFolders()">Inicio</a>
+                </div>
+                <div id="folders-container"></div>
+            </div>
+            <div class="viewer-panel">
+                <iframe id="pdfViewer"></iframe>
+            </div>
+        </div>
     </div>
 
     <!-- Modal de Admin Login -->
@@ -212,39 +273,21 @@
                 <input type="text" id="folderName">
             </div>
             <div class="form-group">
-                <label>URL del Script de Google:</label>
-                <input type="text" id="scriptUrl">
-            </div>
-            <div class="form-group">
-                <label>Contraseña de la carpeta:</label>
-                <input type="password" id="folderPassword">
+                <label>Subir PDFs:</label>
+                <input type="file" id="pdfFiles" multiple accept=".pdf">
             </div>
             <button class="btn btn-primary" onclick="saveFolder()">Guardar</button>
             <button class="btn btn-danger" onclick="closeModal('folderModal')">Cancelar</button>
         </div>
     </div>
 
-    <!-- Modal de Verificación -->
-    <div id="verifyModal" class="modal">
-        <div class="modal-content">
-            <h2>Verificar Acceso</h2>
-            <div class="form-group">
-                <label>Contraseña de la carpeta:</label>
-                <input type="password" id="verifyPassword">
-            </div>
-            <button class="btn btn-primary" onclick="verifyFolderAccess()">Verificar</button>
-            <button class="btn btn-danger" onclick="closeModal('verifyModal')">Cancelar</button>
-        </div>
-    </div>
-
     <script>
         // Configuración
-        const ADMIN_PASSWORD = 'admin123'; // Cambiar en producción
+        const ADMIN_PASSWORD = 'admin123';
         let isAdminMode = false;
-        let currentFolderId = null;
-        let pendingAction = null;
+        let currentFolder = null;
 
-        // Obtener folders guardados
+        // Almacenamiento de carpetas y PDFs
         let folders = JSON.parse(localStorage.getItem('folders')) || {};
 
         // Event Listeners
@@ -259,10 +302,6 @@
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
-            clearModalInputs(modalId);
-        }
-
-        function clearModalInputs(modalId) {
             const modal = document.getElementById(modalId);
             modal.querySelectorAll('input').forEach(input => input.value = '');
         }
@@ -291,22 +330,35 @@
             localStorage.removeItem('adminMode');
         }
 
-        function saveFolder() {
+        async function saveFolder() {
             const name = document.getElementById('folderName').value;
-            const script = document.getElementById('scriptUrl').value;
-            const password = document.getElementById('folderPassword').value;
+            const files = document.getElementById('pdfFiles').files;
 
-            if (!name || !script || !password) {
-                alert('Por favor complete todos los campos');
+            if (!name || files.length === 0) {
+                alert('Por favor ingrese un nombre y seleccione al menos un PDF');
                 return;
             }
 
-            const folderId = currentFolderId || `folder-${Date.now()}`;
+            const folderId = `folder-${Date.now()}`;
+            const pdfs = [];
+
+            for (let file of files) {
+                // Convertir PDF a URL de datos
+                const reader = new FileReader();
+                const pdfData = await new Promise(resolve => {
+                    reader.onload = e => resolve(e.target.result);
+                    reader.readAsDataURL(file);
+                });
+
+                pdfs.push({
+                    name: file.name,
+                    data: pdfData
+                });
+            }
+
             folders[folderId] = {
                 name,
-                script,
-                password,
-                pdfs: []
+                pdfs
             };
 
             localStorage.setItem('folders', JSON.stringify(folders));
@@ -315,69 +367,11 @@
         }
 
         function deleteFolder(folderId) {
-            delete folders[folderId];
-            localStorage.setItem('folders', JSON.stringify(folders));
-            renderFolders();
-        }
-
-        function showVerifyModal(folderId, action) {
-            currentFolderId = folderId;
-            pendingAction = action;
-            openModal('verifyModal');
-        }
-
-        async function verifyFolderAccess() {
-            const password = document.getElementById('verifyPassword').value;
-            const folder = folders[currentFolderId];
-
-            if (password === folder.password) {
-                closeModal('verifyModal');
-                if (pendingAction === 'open') {
-                    await loadFolderContent(currentFolderId);
-                } else if (pendingAction === 'delete') {
-                    deleteFolder(currentFolderId);
-                }
-            } else {
-                alert('Contraseña incorrecta');
+            if (confirm('¿Está seguro de eliminar esta carpeta?')) {
+                delete folders[folderId];
+                localStorage.setItem('folders', JSON.stringify(folders));
+                renderFolders();
             }
-        }
-
-        async function loadFolderContent(folderId) {
-            const folder = folders[folderId];
-            const contentDiv = document.getElementById(`content-${folderId}`);
-            
-            try {
-                const response = await fetch(folder.script);
-                if (!response.ok) throw new Error('Error al cargar los PDFs');
-                const pdfs = await response.json();
-                
-                folder.pdfs = pdfs;
-                renderPDFs(folderId);
-                contentDiv.classList.add('active');
-            } catch (error) {
-                document.getElementById('error-message').textContent = 
-                    `Error al cargar los PDFs: ${error.message}`;
-            }
-        }
-
-        function renderPDFs(folderId) {
-            const folder = folders[folderId];
-            const contentDiv = document.getElementById(`content-${folderId}`);
-            const pdfList = document.createElement('ul');
-            pdfList.className = 'pdf-list';
-
-            folder.pdfs.forEach(pdf => {
-                const li = document.createElement('li');
-                const a = document.createElement('a');
-                a.href = pdf.url;
-                a.textContent = pdf.name;
-                a.target = '_blank';
-                li.appendChild(a);
-                pdfList.appendChild(li);
-            });
-
-            contentDiv.innerHTML = '';
-            contentDiv.appendChild(pdfList);
         }
 
         function renderFolders() {
@@ -388,23 +382,40 @@
                 const folderDiv = document.createElement('div');
                 folderDiv.className = 'folder';
                 folderDiv.innerHTML = `
-                    <div class="folder-header">
+                    <div class="folder-header" onclick="toggleFolder('${id}')">
                         <span>${index + 1}. ${folder.name}</span>
-                        <div class="folder-actions">
-                            ${isAdminMode ? 
-                                `<button class="btn btn-danger" onclick="showVerifyModal('${id}', 'delete')">
+                        ${isAdminMode ? `
+                            <div class="folder-actions">
+                                <button class="btn btn-danger" onclick="event.stopPropagation(); deleteFolder('${id}')">
                                     Eliminar
-                                </button>` : ''
-                            }
-                            <button class="btn btn-primary" onclick="showVerifyModal('${id}', 'open')">
-                                Abrir
-                            </button>
-                        </div>
+                                </button>
+                            </div>
+                        ` : ''}
                     </div>
-                    <div id="content-${id}" class="folder-content"></div>
+                    <div id="content-${id}" class="folder-content">
+                        ${folder.pdfs.map((pdf, pdfIndex) => `
+                            <div class="pdf-item" onclick="viewPDF('${id}', ${pdfIndex})">
+                                ${pdf.name}
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
                 container.appendChild(folderDiv);
             });
+        }
+
+        function toggleFolder(folderId) {
+            const content = document.getElementById(`content-${folderId}`);
+            const allContents = document.querySelectorAll('.folder-content');
+            
+            allContents.forEach(c => c.classList.remove('active'));
+            content.classList.add('active');
+        }
+
+        function viewPDF(folderId, pdfIndex) {
+            const pdf = folders[folderId].pdfs[pdfIndex];
+            const viewer = document.getElementById('pdfViewer');
+            viewer.src = pdf.data;
         }
 
         function searchPDFs() {
@@ -413,17 +424,18 @@
             const search3 = document.getElementById('search3').value.toLowerCase();
             const terms = [search1, search2, search3].filter(term => term);
 
-            Object.entries(folders).forEach(([id, folder]) => {
-                const contentDiv = document.getElementById(`content-${id}`);
-                if (!contentDiv) return;
-
-                const pdfItems = contentDiv.getElementsByTagName('li');
-                Array.from(pdfItems).forEach(item => {
-                    const text = item.textContent.toLowerCase();
-                    const matches = terms.every(term => text.includes(term));
-                    item.style.display = matches ? '' : 'none';
-                });
+            const pdfItems = document.querySelectorAll('.pdf-item');
+            pdfItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const matches = terms.every(term => text.includes(term));
+                item.style.display = matches ? '' : 'none';
             });
+        }
+
+        function showFolders() {
+            document.getElementById('pdfViewer').src = '';
+            const contents = document.querySelectorAll('.folder-content');
+            contents.forEach(content => content.classList.remove('active'));
         }
 
         // Inicialización
