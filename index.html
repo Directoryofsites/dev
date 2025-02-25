@@ -618,16 +618,15 @@
 
     <script>
         // CONFIGURACIÓN DE FIREBASE CON TUS CREDENCIALES
-        const firebaseConfig = {
-            apiKey: "AIzaSyAAMEnTXBufZ6LJW7eTVjijjxyoFcuftss",
-            authDomain: "mensajes-7a793.firebaseapp.com",
-            projectId: "mensajes-7a793",
-            storageBucket: "mensajes-7a793.firebasestorage.app",
-            messagingSenderId: "852650512912",
-            appId: "1:852650512912:web:7e8c63b701e96c938e7095",
-            measurementId: "G-7LMZF0NJ8K"
-        };
-        
+const firebaseConfig = {
+    apiKey: "AIzaSyAAMEnTXBufZ6LJW7eTVjijjxyoFcuftss",
+    authDomain: "mensajes-7a793.firebaseapp.com",
+    projectId: "mensajes-7a793",
+    storageBucket: "mensajes-7a793.firebasestorage.app",  // Cambiado a .firebasestorage.app
+    messagingSenderId: "852650512912",
+    appId: "1:852650512912:web:7e8c63b701e96c938e7095",
+    measurementId: "G-7LMZF0NJ8K"
+};        
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
